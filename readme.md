@@ -1,4 +1,4 @@
-# Sistema de Monitoramento Acústico IoT
+# Sistema de Monitoramento Acústico IoT - v1.1
 
 <div align="center">
 

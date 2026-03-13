@@ -28,6 +28,35 @@ Este projeto foi desenvolvido como Trabalho de Conclusão de Curso (TCC) em Enge
 - Thiago Barbosa de Araujo
 - Victor José Cordeiro de Medeiros
 
+  <table>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/thiagoeu" target="_blank">
+        <img src="https://avatars.githubusercontent.com/u/95484968?v=4" width="100px;" alt="Avatar Victor"/><br>
+        <sub>
+          <b>Thiago Barbosa de Araujo</b>
+        </sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/Dcorder123" target="_blank">
+        <img src="https://avatars.githubusercontent.com/u/101361658?v=4" width="100px;" alt="Avatar Daniel"/><br>
+        <sub>
+          <b>Daniel Barbosa Vasconcelos</b>
+        </sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/victorjcm" target="_blank">
+        <img src="https://avatars.githubusercontent.com/u/79644504?v=4" width="100px;" alt="Avatar Victor"/><br>
+        <sub>
+          <b>Victor José de Medeiros</b>
+        </sub>
+      </a>
+    </td>
+  </tr>
+</table>
+
 ## ✨ Funcionalidades
 
 ### Monitoramento em Tempo Real

@@ -115,7 +115,6 @@ O sistema segue uma arquitetura distribuída com processamento local:
 
 - Raspberry Pi B+ com Raspbian OS
 - Python 3.9+
-- Node.js 14+
 - Git
 
 ### Backend

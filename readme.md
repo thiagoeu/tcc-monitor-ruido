@@ -127,10 +127,7 @@ O sistema segue uma arquitetura distribuída com processamento local:
 
 #### Frontend
 
-- **Framework**: React.js
-- **Visualização**: Chart.js para gráficos em tempo real
-- **Estilização**: Tailwind CSS
-- **HTTP Client**: Axios
+### Backend
 
 #### Infraestrutura
 
@@ -145,32 +142,3 @@ O sistema segue uma arquitetura distribuída com processamento local:
 - Raspberry Pi B+ com Raspbian OS
 - Python 3.9+
 - Git
-
-### Backend
-
-```bash
-# Clone o repositório
-git clone https://github.com/seu-usuario/monitoramento-acustico-iot.git
-cd monitoramento-acustico-iot/backend
-
-# Crie ambiente virtual
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# ou
-venv\Scripts\activate  # Windows
-
-# Instale dependências
-pip install -r requirements.txt
-
-# Configure variáveis de ambiente
-cp .env.example .env
-# Edite .env com suas configurações
-
-# Inicialize o banco de dados
-flask db init
-flask db migrate
-flask db upgrade
-
-# Execute o servidor
-flask run --host=0.0.0.0 --port=5000
-```

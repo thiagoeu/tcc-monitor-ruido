@@ -1,0 +1,29 @@
+@startuml
+autonumber
+skinparam actorStyle awesome
+
+title Fluxo de Cadastro de Ambientes (RF-01)
+
+actor "Gerenciador" as G
+participant "Frontend (Web)" as Web
+participant "Backend (API)" as Server
+database "SQLite" as DB
+
+G -> Web: Acessa formulário de cadastro de dispositivo
+Web --> G: Exibe campos (Nome, Localização, Limite dB)
+
+G -> Web: Preenche dados e clica em "Salvar"
+Web -> Server: POST /ambientes (JSON)
+activate Server
+
+Server -> Server: Valida consistência dos dados
+Server -> DB: INSERT INTO ambientes (dados)
+activate DB
+DB --> Server: Confirmação de registro
+deactivate DB
+
+Server --> Web: Status 201 (Sucesso)
+deactivate Server
+
+Web --> G: Exibe mensagem de sucesso e lista atualizada dos dipositivos
+@enduml

@@ -1,0 +1,43 @@
+@startuml
+autonumber
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+title Fluxo de Monitoramento e Alerta (RF-07 & RFH-01)
+
+actor "Gerenciador" as G
+participant "Frontend (Web)" as Web
+participant "Backend (Raspberry Pi)" as Server
+database "SQLite" as DB
+participant "Hardware (Interface RS485)" as HW
+actor "Sensor E06A" as Sensor
+
+== Ciclo de Coleta (A cada 5 segundos) ==
+
+Sensor -> HW: Envia sinal de pressão sonora 
+activate HW
+HW -> HW: Valida Checksum (RFH-09) 
+HW -> Server: Dados legíveis (UART/USB) 
+deactivate HW
+
+activate Server
+Server -> Server: Processa lógica de negócio 
+Server -> DB: Persiste medição (RFH-07) 
+activate DB
+DB --> Server: Confirmação
+deactivate DB
+
+== Verificação de Limites ==
+
+alt Ruído > Limite Configurado
+    Server -> Server: Registra Violação 
+    Server -> HW: Comando para acionar LED/LCD 
+    Server -> Web: Envia Notificação de Alerta (RF-06) 
+    Web --> G: Alerta Visual no Dashboard 
+else Ruído Normal
+    Server -> Web: Atualiza Nível em Tempo Real 
+end
+
+Web --> G: Exibe dados (Latência < 2s) 
+deactivate Server
+@enduml

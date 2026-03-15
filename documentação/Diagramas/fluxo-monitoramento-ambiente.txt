@@ -1,0 +1,37 @@
+@startuml
+autonumber
+skinparam sequenceMessageAlign center
+
+title Fluxo de Monitoramento de Ambiente (RF-07 & RFH-01)
+
+actor "Gerenciador" as G
+participant "Dashboard (Frontend)" as Web
+participant "Servidor (Backend RPi)" as Server
+database "SQLite" as DB
+participant "Interface RS485" as RS485
+actor "Sensor E06A" as Sensor
+
+== Ciclo de Captura (Loop Infinito) ==
+
+Sensor -> RS485: Envia sinal acústico
+activate RS485
+RS485 -> Server: Dados de pressão sonora (RFH-01)
+deactivate RS485
+
+activate Server
+Server -> Server: Valida Checksum (RFH-09)
+Server -> DB: Salva medição (RFH-07)
+activate DB
+DB --> Server: OK
+deactivate DB
+
+== Atualização da Interface ==
+
+Server -> Web: Envia dados via WebSocket/API (RFH-06)
+activate Web
+Web -> Web: Processa design responsivo (RNF-04)
+Web --> G: Exibe nível de ruído em tempo real (Latência < 2s)
+deactivate Web
+deactivate Server
+
+@enduml

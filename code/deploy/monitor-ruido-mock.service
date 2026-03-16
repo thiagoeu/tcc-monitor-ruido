@@ -6,7 +6,7 @@ After=monitor-ruido-backend.service network.target
 Type=simple
 WorkingDirectory=/home/ruido/tcc-monitor-ruido
 Environment=PYTHONUNBUFFERED=1
-ExecStart=/home/ruido/tcc-monitor-ruido/.venv/bin/python /home/ruido/tcc-monitor-ruido/code/mock/sensor.py --api-url http://127.0.0.1:5000/api/medicoes --interval 5 --sensors e06a-001:45:82,e06a-002:35:78
+ExecStart=/home/ruido/tcc-monitor-ruido/.venv/bin/python /home/ruido/tcc-monitor-ruido/code/mock/sensor.py --api-url http://127.0.0.1:5000/api/medicoes --interval 5 --dynamic
 Restart=always
 RestartSec=5
 User=ruido

@@ -1,0 +1,9 @@
+{
+  "include": ["code/backend", "code/mock"],
+  "executionEnvironments": [
+    {
+      "root": "code/backend",
+      "extraPaths": ["code/backend"]
+    }
+  ]
+}

@@ -3,324 +3,138 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Monitor de Ruído - Raspberry Pi</title>
-    <style>
-      :root {
-        color-scheme: dark;
-        --bg: #10141a;
-        --panel: #171d25;
-        --line: #2a3444;
-        --text: #f3f7ff;
-        --muted: #a8b2c0;
-        --ok: #5de08a;
-        --warn: #ff8d8d;
-      }
-
-      * {
-        box-sizing: border-box;
-        font-family: Arial, sans-serif;
-      }
-
-      body {
-        margin: 0;
-        background: var(--bg);
-        color: var(--text);
-      }
-
-      .container {
-        max-width: 1100px;
-        margin: 0 auto;
-        padding: 16px;
-      }
-
-      .header {
-        margin-bottom: 16px;
-      }
-
-      .header h1 {
-        margin: 0;
-        font-size: 1.4rem;
-      }
-
-      .header p {
-        margin: 4px 0 0;
-        color: var(--muted);
-      }
-
-      .grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-        gap: 12px;
-        margin-bottom: 16px;
-      }
-
-      .card {
-        background: var(--panel);
-        border: 1px solid var(--line);
-        border-radius: 10px;
-        padding: 12px;
-      }
-
-      .card h3 {
-        margin: 0 0 8px;
-        font-size: 1rem;
-      }
-
-      .tag {
-        display: inline-block;
-        border-radius: 12px;
-        padding: 4px 8px;
-        font-size: 0.8rem;
-        font-weight: bold;
-      }
-
-      .ok {
-        background: rgba(93, 224, 138, 0.16);
-        color: var(--ok);
-      }
-
-      .warn {
-        background: rgba(255, 141, 141, 0.16);
-        color: var(--warn);
-      }
-
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.9rem;
-      }
-
-      th,
-      td {
-        border-bottom: 1px solid var(--line);
-        text-align: left;
-        padding: 8px;
-      }
-
-      th {
-        color: var(--muted);
-        font-weight: 600;
-      }
-
-      .footer {
-        margin-top: 10px;
-        color: var(--muted);
-        font-size: 0.85rem;
-      }
-
-      .input-row {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 8px;
-      }
-
-      input,
-      button {
-        width: 100%;
-        padding: 8px;
-        border-radius: 8px;
-        border: 1px solid var(--line);
-        background: #0f141b;
-        color: var(--text);
-      }
-
-      button {
-        cursor: pointer;
-      }
-
-      .small {
-        font-size: 0.8rem;
-      }
-    </style>
+    <title>Dashboard de Ruído - Raspberry Pi 3 B+</title>
+    <link rel="stylesheet" href="/assets/style.css" />
   </head>
   <body>
-    <div class="container">
+    <div class="app-layout">
+      <!-- Sidebar -->
+      <nav class="sidebar">
+        <div class="sidebar-header">
+          <h2>Menu</h2>
+        </div>
+        <ul class="sidebar-menu">
+          <li><a href="/" class="sidebar-link active">📊 Dashboard</a></li>
+          <li><a href="/graficos.html" class="sidebar-link">📈 Gráficos</a></li>
+        </ul>
+        <div class="sidebar-footer">
+          <small id="status-sidebar">Online</small>
+        </div>
+      </nav>
+
+      <!-- Main Content -->
+      <div class="main-content">
+        <div class="container">
       <div class="header">
-        <h1>Monitoramento de Ruído (Raspberry Pi 3 B+)</h1>
+        <h1>Dashboard de Monitoramento de Ruído</h1>
         <p id="status">Carregando dados...</p>
       </div>
 
-      <div class="card" style="margin-bottom: 16px">
-        <h3>Cadastrar Ambiente</h3>
-        <form id="ambienteForm" class="input-row">
-          <input name="nome" placeholder="Nome" required />
-          <input name="localizacao" placeholder="Localização" required />
-          <input name="sensor_id" placeholder="Sensor ID" required />
-          <input name="limite_db" type="number" step="0.1" min="0" value="65" required />
-          <button type="submit">Salvar</button>
-        </form>
-        <div id="formMessage" class="small" style="margin-top: 8px"></div>
-      </div>
+      <details class="accordion" open>
+        <summary>Resumo ao vivo</summary>
+        <div class="section-content">
+          <div id="ambientes" class="grid"></div>
+          <div class="chart-grid">
+            <div class="chart-card">
+              <h3>Tendência (últimas medições)</h3>
+              <canvas id="trendChart" height="170"></canvas>
+            </div>
+            <div class="chart-card">
+              <h3>% de alertas por ambiente</h3>
+              <canvas id="alertRateChart" height="170"></canvas>
+            </div>
+          </div>
+        </div>
+      </details>
 
-      <div id="ambientes" class="grid"></div>
+      <details class="accordion" open>
+        <summary>Cadastro de ambiente</summary>
+        <div class="section-content">
+          <form id="ambienteForm" class="input-row">
+            <input name="nome" placeholder="Nome" required />
+            <input name="localizacao" placeholder="Localização" required />
+            <input name="sensor_id" placeholder="Sensor ID" required />
+            <input name="limite_db" type="number" step="0.1" min="0" value="65" required />
+            <button type="submit">Salvar</button>
+          </form>
+          <div id="formMessage" class="small form-message"></div>
+        </div>
+      </details>
 
-      <div class="card" style="margin-bottom: 16px">
-        <h3>Últimas Medições</h3>
-        <table>
-          <thead>
-            <tr>
-              <th>Data/Hora</th>
-              <th>Ambiente</th>
-              <th>Sensor</th>
-              <th>dB</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody id="medicoesBody"></tbody>
-        </table>
-      </div>
+      <details class="accordion">
+        <summary>Medições recentes</summary>
+        <div class="section-content">
+          <table>
+            <thead>
+              <tr>
+                <th>Data/Hora</th>
+                <th>Ambiente</th>
+                <th>Sensor</th>
+                <th>dB</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="medicoesBody"></tbody>
+          </table>
+        </div>
+      </details>
 
-      <div class="card">
-        <h3>Alertas Recentes</h3>
-        <table>
-          <thead>
-            <tr>
-              <th>Data/Hora</th>
-              <th>Ambiente</th>
-              <th>Mensagem</th>
-            </tr>
-          </thead>
-          <tbody id="alertasBody"></tbody>
-        </table>
-        <div class="footer">Atualização automática a cada 5 segundos.</div>
+      <details class="accordion">
+        <summary>Alertas recentes</summary>
+        <div class="section-content">
+          <table>
+            <thead>
+              <tr>
+                <th>Data/Hora</th>
+                <th>Ambiente</th>
+                <th>Mensagem</th>
+              </tr>
+            </thead>
+            <tbody id="alertasBody"></tbody>
+          </table>
+        </div>
+      </details>
+
+      <details class="accordion">
+        <summary>Relatórios</summary>
+        <div class="section-content">
+          <div class="input-row report-controls">
+            <label>
+              Janela (horas)
+              <input id="reportHours" type="number" min="1" max="720" value="24" />
+            </label>
+            <button id="refreshReportBtn" type="button">Atualizar resumo</button>
+            <button id="downloadTxtBtn" type="button">Baixar TXT</button>
+          </div>
+
+          <div class="report-box">
+            <h3>Resumo geral</h3>
+            <div id="reportSummary" class="report-grid"></div>
+          </div>
+
+          <div class="report-box">
+            <h3>Resumo por ambiente</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Ambiente</th>
+                  <th>Total medições</th>
+                  <th>Total alertas</th>
+                  <th>% alerta</th>
+                  <th>Média dB</th>
+                  <th>Pico dB</th>
+                </tr>
+              </thead>
+              <tbody id="reportAmbientesBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </details>
+
+      <div class="footer">Atualização automática a cada 5 segundos.</div>
+        </div>
       </div>
     </div>
-
-    <script>
-      function toLocalDate(isoDate) {
-        if (!isoDate) return "-";
-        const date = new Date(isoDate);
-        return date.toLocaleString("pt-BR");
-      }
-
-      function statusTag(excedeu) {
-        return excedeu
-          ? '<span class="tag warn">Acima do limite</span>'
-          : '<span class="tag ok">Normal</span>';
-      }
-
-      async function fetchJson(path, options) {
-        const response = await fetch(path, options);
-        if (!response.ok) {
-          const body = await response.json().catch(() => ({}));
-          throw new Error(body.erro || "Falha na requisição");
-        }
-        return response.json();
-      }
-
-      function renderAmbientes(ambientes, ultimaPorAmbiente) {
-        const container = document.getElementById("ambientes");
-        if (!ambientes.length) {
-          container.innerHTML = '<div class="card">Nenhum ambiente cadastrado.</div>';
-          return;
-        }
-
-        container.innerHTML = ambientes
-          .map((ambiente) => {
-            const ultima = ultimaPorAmbiente[String(ambiente.id)] || ultimaPorAmbiente[ambiente.id];
-            const db = ultima ? Number(ultima.db).toFixed(1) : "-";
-            const excedeu = ultima ? Boolean(ultima.excedeu_limite) : false;
-            const horario = ultima ? toLocalDate(ultima.created_at) : "Sem medições";
-
-            return `
-              <div class="card">
-                <h3>${ambiente.nome}</h3>
-                <div>Local: ${ambiente.localizacao}</div>
-                <div>Sensor: ${ambiente.sensor_id}</div>
-                <div>Limite: ${ambiente.limite_db} dB</div>
-                <div>Último valor: <strong>${db} dB</strong></div>
-                <div style="margin-top:6px">${ultima ? statusTag(excedeu) : '<span class="tag ok">Sem leitura</span>'}</div>
-                <div class="small" style="margin-top:8px;color:var(--muted)">${horario}</div>
-              </div>
-            `;
-          })
-          .join("");
-      }
-
-      function renderMedicoes(medicoes) {
-        const tbody = document.getElementById("medicoesBody");
-        if (!medicoes.length) {
-          tbody.innerHTML = '<tr><td colspan="5">Sem medições.</td></tr>';
-          return;
-        }
-
-        tbody.innerHTML = medicoes
-          .map(
-            (medicao) => `
-          <tr>
-            <td>${toLocalDate(medicao.created_at)}</td>
-            <td>${medicao.ambiente_nome}</td>
-            <td>${medicao.sensor_id}</td>
-            <td>${Number(medicao.db).toFixed(1)}</td>
-            <td>${statusTag(Boolean(medicao.excedeu_limite))}</td>
-          </tr>
-        `
-          )
-          .join("");
-      }
-
-      function renderAlertas(alertas) {
-        const tbody = document.getElementById("alertasBody");
-        if (!alertas.length) {
-          tbody.innerHTML = '<tr><td colspan="3">Sem alertas.</td></tr>';
-          return;
-        }
-
-        tbody.innerHTML = alertas
-          .map(
-            (alerta) => `
-          <tr>
-            <td>${toLocalDate(alerta.created_at)}</td>
-            <td>${alerta.ambiente_nome || "-"}</td>
-            <td>${alerta.mensagem}</td>
-          </tr>
-        `
-          )
-          .join("");
-      }
-
-      async function loadDashboard() {
-        try {
-          const data = await fetchJson("/api/monitoramento?limit=60");
-          renderAmbientes(data.ambientes || [], data.ultima_por_ambiente || {});
-          renderMedicoes(data.medicoes || []);
-          renderAlertas(data.alertas || []);
-          document.getElementById("status").textContent = `Online • Atualizado em ${new Date().toLocaleString("pt-BR")}`;
-        } catch (error) {
-          document.getElementById("status").textContent = `Erro: ${error.message}`;
-        }
-      }
-
-      async function submitAmbiente(event) {
-        event.preventDefault();
-        const form = event.target;
-        const formMessage = document.getElementById("formMessage");
-
-        const payload = {
-          nome: form.nome.value.trim(),
-          localizacao: form.localizacao.value.trim(),
-          sensor_id: form.sensor_id.value.trim(),
-          limite_db: Number(form.limite_db.value),
-        };
-
-        try {
-          await fetchJson("/api/ambientes", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-          });
-          form.reset();
-          form.limite_db.value = "65";
-          formMessage.textContent = "Ambiente cadastrado com sucesso.";
-          loadDashboard();
-        } catch (error) {
-          formMessage.textContent = error.message;
-        }
-      }
-
-      document.getElementById("ambienteForm").addEventListener("submit", submitAmbiente);
-      loadDashboard();
-      setInterval(loadDashboard, 5000);
-    </script>
+    <script src="/assets/app.js"></script>
   </body>
 </html>

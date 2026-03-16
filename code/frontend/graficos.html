@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gráficos - Monitor de Ruído</title>
+    <link rel="stylesheet" href="/assets/style.css" />
+  </head>
+  <body>
+    <div class="app-layout">
+      <!-- Sidebar -->
+      <nav class="sidebar">
+        <div class="sidebar-header">
+          <h2>Menu</h2>
+        </div>
+        <ul class="sidebar-menu">
+          <li><a href="/" class="sidebar-link">📊 Dashboard</a></li>
+          <li><a href="/graficos.html" class="sidebar-link active">📈 Gráficos</a></li>
+        </ul>
+        <div class="sidebar-footer">
+          <small id="status-sidebar">Online</small>
+        </div>
+      </nav>
+
+      <!-- Main Content -->
+      <div class="main-content">
+        <div class="header">
+          <h1>Gráficos de Decibéis - Todos os Ambientes</h1>
+          <p id="status">Carregando gráficos...</p>
+        </div>
+
+        <div id="graficos-container" class="graficos-grid">
+          <!-- Gráficos são inseridos aqui por JavaScript -->
+        </div>
+      </div>
+    </div>
+
+    <script src="/assets/app.js"></script>
+    <script src="/assets/graficos.js"></script>
+  </body>
+</html>

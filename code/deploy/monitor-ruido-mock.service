@@ -1,0 +1,15 @@
+[Unit]
+Description=Mock de Sensores de Ruido
+After=monitor-ruido-backend.service network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/pi/tcc-monitor-ruido
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/usr/bin/python3 /home/pi/tcc-monitor-ruido/code/mock/sensor.py --api-url http://127.0.0.1:5000/api/medicoes --interval 5 --sensors e06a-001:45:82,e06a-002:35:78
+Restart=always
+RestartSec=5
+User=pi
+
+[Install]
+WantedBy=multi-user.target

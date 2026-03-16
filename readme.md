@@ -1,144 +1,104 @@
-# Sistema de Monitoramento Acústico IoT - v1.1
+# Sistema de Monitoramento de Ruído (Raspberry Pi 3 B+)
 
-<div align="center">
+Implementação enxuta para ambiente **headless** (sem interface gráfica), com:
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Raspberry Pi](https://img.shields.io/badge/Raspberry%20Pi-B+-c51a4a?logo=raspberry-pi)](https://www.raspberrypi.org/)
-[![Python](https://img.shields.io/badge/Python-3.9+-blue?logo=python)](https://python.org)
-[![Flask](https://img.shields.io/badge/Flask-2.0+-black?logo=flask)](https://flask.palletsprojects.com/)
+- Backend Flask + SQLite local
+- Dashboard web leve (acessado de outro dispositivo)
+- Mock de múltiplos sensores de ruído
+- Estrutura pronta para rodar como serviço no boot (`systemd`)
 
-**Solução de monitoramento acústico distribuído baseada em IoT para mapeamento e controle de níveis sonoros em tempo real.**
+## Estrutura
 
-[Funcionalidades](#funcionalidades) •
-[Arquitetura](#arquitetura) •
-[Hardware](#hardware) •
-[Instalação](#instalação) •
-[API](#api) •
-[Contribuição](#contribuição)
+- `code/backend/main.py`: API principal e banco SQLite
+- `code/frontend/index.html`: dashboard de monitoramento
+- `code/mock/sensor.py`: simulador de sensores
+- `code/deploy/*.service`: serviços para Raspberry Pi
 
-</div>
+## Requisitos
 
-## 📋 Sobre o Projeto
-
-Este projeto foi desenvolvido como Trabalho de Conclusão de Curso (TCC) em Engenharia de Computação no Instituto Federal da Paraíba (IFPB) - Campus Campina Grande. O sistema permite o monitoramento acústico contínuo de ambientes utilizando sensores conectados a uma Raspberry Pi, com visualização em tempo real e geração de relatórios históricos.
-
-### Autores
-
-- Daniel Barbosa Vasconcelos
-- Thiago Barbosa de Araujo
-- Victor José Cordeiro de Medeiros
-
-  <table>
-  <tr>
-    <td align="center">
-      <a href="https://github.com/thiagoeu" target="_blank">
-        <img src="https://avatars.githubusercontent.com/u/95484968?v=4" width="100px;" alt="Avatar Victor"/><br>
-        <sub>
-          <b>Thiago Barbosa de Araujo</b>
-        </sub>
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://github.com/Dcorder123" target="_blank">
-        <img src="https://avatars.githubusercontent.com/u/101361658?v=4" width="100px;" alt="Avatar Daniel"/><br>
-        <sub>
-          <b>Daniel Barbosa Vasconcelos</b>
-        </sub>
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://github.com/victorjcm" target="_blank">
-        <img src="https://avatars.githubusercontent.com/u/79644504?v=4" width="100px;" alt="Avatar Victor"/><br>
-        <sub>
-          <b>Victor José de Medeiros</b>
-        </sub>
-      </a>
-    </td>
-  </tr>
-</table>
-
-## ✨ Funcionalidades
-
-### Monitoramento em Tempo Real
-
-- Coleta de dados de pressão sonora a cada 5 segundos
-- Visualização gráfica dos níveis de ruído por ambiente
-- Dashboard interativo com atualização automática
-
-### Gestão de Ambientes e Sensores
-
-- Cadastro, edição e exclusão de ambientes monitorados
-- Configuração personalizada de limites por ambiente/sensor
-- Mapeamento visual dos pontos de monitoramento
-
-### Sistema de Alertas
-
-- Notificações automáticas quando limites são ultrapassados
-- Alertas visuais no dashboard e no hardware (LEDs/LCD)
-- Registro histórico de violações
-
-### Relatórios e Análises
-
-- Geração de relatórios em PDF com filtros personalizados
-- Exportação de dados históricos
-- Análise de conformidade com padrões de ruído
-
-## 🏗️ Arquitetura
-
-O sistema segue uma arquitetura distribuída com processamento local:
-
-### Componentes Principais
-
-1. **Camada de Coleta**: Sensores E06A com comunicação RS485
-2. **Camada de Processamento**: Raspberry Pi B+ com backend Flask
-3. **Camada de Armazenamento**: Banco de dados SQLite local
-4. **Camada de Apresentação**: Dashboard web responsivo
-
-## 🔧 Hardware
-
-### Lista de Materiais (BoM)
-
-| Item                 | Quantidade | Descrição                        | Custo Estimado (R$) |
-| -------------------- | ---------- | -------------------------------- | ------------------- |
-| Raspberry Pi B+      | 1          | Servidor central e processamento | 400,00              |
-| Conversor USB-RS485  | 1          | Interface de comunicação         | 29,00               |
-| Sensor E06A          | 1+         | Coleta de dados acústicos        | -                   |
-| Cartão MicroSD 16GB  | 1          | Armazenamento                    | 15,00               |
-| Protoboard e jumpers | 1          | Montagem e conexões              | 10,00               |
-| Caixa impressa 3D    | 1          | Estrutura física                 | 7,00                |
-| **Total Estimado**   |            |                                  | **537,00**          |
-
-### Especificações Técnicas
-
-- **Sensor**: E06A com interface RS485
-- **Processador**: Raspberry Pi B+ (512MB RAM)
-- **Comunicação**: RS485 para coleta, Wi-Fi/Ethernet para web
-- **Armazenamento**: SQLite em cartão SD
-
-## 💻 Software
-
-### Stack Tecnológica
-
-#### Backend
-
-- **Framework**: Flask (Python 3.9+)
-- **Banco de Dados**: SQLite + SQLAlchemy ORM
-- **Comunicação Serial**: PySerial para leitura dos sensores
-
-#### Frontend
-
-### Backend
-
-#### Infraestrutura
-
-- **Container**: Docker (opcional)
-- **CI/CD**: GitHub Actions
-- **Monitoramento**: Prometheus + Grafana (planejado)
-
-## 📦 Instalação
-
-### Pré-requisitos
-
-- Raspberry Pi B+ com Raspbian OS
+- Raspberry Pi 3 B+ com Raspberry Pi OS Lite
 - Python 3.9+
-- Git
+- Rede local para acessar o dashboard
+
+## Subir localmente (teste rápido)
+
+Na pasta do projeto:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+
+python3 code/backend/main.py
+```
+
+Em outro terminal:
+
+```bash
+source .venv/bin/activate
+python3 code/mock/sensor.py --api-url http://127.0.0.1:5000/api/medicoes --interval 5 --sensors e06a-001:45:82,e06a-002:35:78
+```
+
+Abra no navegador (outro PC/celular na mesma rede):
+
+```text
+http://IP_DO_RASPBERRY:5000
+```
+
+## API principal
+
+- `GET /health`: saúde do serviço
+- `GET /api/ambientes`: lista ambientes
+- `POST /api/ambientes`: cadastra ambiente
+- `PUT /api/ambientes/{id}`: atualiza ambiente
+- `POST /api/medicoes`: recebe leitura (`sensor_id`, `db`)
+- `GET /api/monitoramento`: snapshot para dashboard
+- `GET /api/alertas`: lista alertas
+
+Exemplo de cadastro de ambiente:
+
+```bash
+curl -X POST http://127.0.0.1:5000/api/ambientes \
+  -H "Content-Type: application/json" \
+  -d '{"nome":"Biblioteca","localizacao":"Bloco A","sensor_id":"e06a-002","limite_db":60}'
+```
+
+Exemplo de envio de medição:
+
+```bash
+curl -X POST http://127.0.0.1:5000/api/medicoes \
+  -H "Content-Type: application/json" \
+  -d '{"sensor_id":"e06a-001","db":72.4}'
+```
+
+## Rodar no boot com systemd (Raspberry)
+
+Copie os serviços:
+
+```bash
+sudo cp code/deploy/monitor-ruido-backend.service /etc/systemd/system/
+sudo cp code/deploy/monitor-ruido-mock.service /etc/systemd/system/
+```
+
+> Ajuste os caminhos nos arquivos `.service` caso o projeto não esteja em `/home/pi/tcc-monitor-ruido`.
+
+Ative e inicie:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable monitor-ruido-backend.service
+sudo systemctl enable monitor-ruido-mock.service
+sudo systemctl start monitor-ruido-backend.service
+sudo systemctl start monitor-ruido-mock.service
+```
+
+Logs:
+
+```bash
+sudo journalctl -u monitor-ruido-backend.service -f
+sudo journalctl -u monitor-ruido-mock.service -f
+```
+
+## Próximo passo para sensor real RS485
+
+Com o mock validado, o passo seguinte é trocar o envio de `code/mock/sensor.py` por leitura real via conversor USB-RS485 e protocolo do E06A, mantendo a mesma rota `POST /api/medicoes`.

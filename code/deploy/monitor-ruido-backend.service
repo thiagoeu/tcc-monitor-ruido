@@ -1,0 +1,17 @@
+[Unit]
+Description=Backend Monitor de Ruido (Flask + SQLite)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/pi/tcc-monitor-ruido
+Environment=PYTHONUNBUFFERED=1
+Environment=APP_HOST=0.0.0.0
+Environment=APP_PORT=5000
+ExecStart=/usr/bin/python3 /home/pi/tcc-monitor-ruido/code/backend/main.py
+Restart=always
+RestartSec=3
+User=pi
+
+[Install]
+WantedBy=multi-user.target

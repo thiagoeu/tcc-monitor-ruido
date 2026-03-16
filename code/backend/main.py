@@ -73,28 +73,30 @@ def init_db():
 	connection.close()
 
 
-def seed_default_environment_if_empty():
+def seed_default_environments():
 	connection = get_connection()
 	cursor = connection.cursor()
-	cursor.execute("SELECT COUNT(*) AS total FROM ambientes")
-	total = cursor.fetchone()["total"]
 
-	if total == 0:
+	defaults = [
+		("Sala Principal", "Laboratório", "e06a-001", 65.0),
+		("Biblioteca", "Bloco A", "e06a-002", 60.0),
+	]
+
+	for nome, localizacao, sensor_id, limite_db in defaults:
+		cursor.execute("SELECT id FROM ambientes WHERE sensor_id = ?", (sensor_id,))
+		exists = cursor.fetchone()
+		if exists:
+			continue
+
 		cursor.execute(
 			"""
 			INSERT INTO ambientes (nome, localizacao, sensor_id, limite_db, ativo, created_at)
 			VALUES (?, ?, ?, ?, ?, ?)
 			""",
-			(
-				"Sala Principal",
-				"Laboratório",
-				"e06a-001",
-				65,
-				1,
-				utc_now_iso(),
-			),
+			(nome, localizacao, sensor_id, limite_db, 1, utc_now_iso()),
 		)
-		connection.commit()
+
+	connection.commit()
 
 	connection.close()
 
@@ -400,7 +402,7 @@ def options_ok():
 
 def bootstrap():
 	init_db()
-	seed_default_environment_if_empty()
+	seed_default_environments()
 
 
 if __name__ == "__main__":

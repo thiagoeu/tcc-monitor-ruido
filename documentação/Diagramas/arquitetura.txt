@@ -1,0 +1,46 @@
+@startuml
+skinparam componentStyle uml2
+skinparam node {
+    BackgroundColor LightSteelBlue
+    BorderColor SteelBlue
+}
+
+title Arquitetura de Sistema: Monitoramento Acústico Local (IoT)
+
+node "Dispositivo Móvel / PC" as Client {
+    artifact "Navegador Web" as Browser
+}
+
+node "Raspberry Pi B+ (Servidor Central)" as RPi {
+    
+    package "Camada de Aplicação (Hospedagem Local)" {
+        component [Frontend (HTML/JS/CSS)] as Front
+        component [Backend API (Python/Flask)] as Back
+    }
+    
+    package "Camada de Dados" {
+        database "SQLite" as DB
+    }
+    
+    package "Camada de Hardware" {
+        component [Driver RS485-UART] as Driver
+    }
+}
+
+node "Sensor E06A" as Sensor {
+    artifact "Transdutor Acústico" as Mic
+}
+
+' Ligações Físicas
+G -- Browser : "Acessa"
+Browser <..> Front : "HTTP/Rede Local"
+Front <..> Back : "Requisições API"
+Back <..> DB : "Persistência (SQL)"
+Back <..> Driver : "Controle de Porta Serial"
+
+' Ligação por Fio
+Driver <---right---> Sensor : "Cabo RS485 (Par Trançado)"
+
+note bottom of RPi : RNF-01: CPU < 30%\nRNF-02: SQLite (Persistência Leve)\nRNF-03: Rede Local (Sem Nuvem)
+
+@enduml

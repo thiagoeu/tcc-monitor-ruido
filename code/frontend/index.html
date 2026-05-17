@@ -1,11 +1,140 @@
 <!doctype html>
-<html lang="en">
+<html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=<device-width>, initial-scale=1.0" />
-    <title>Document</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard de Ruído - Raspberry Pi 3 B+</title>
+    <link rel="stylesheet" href="/assets/style.css" />
   </head>
   <body>
-    <h1>hello world</h1>
+    <div class="app-layout">
+      <!-- Sidebar -->
+      <nav class="sidebar">
+        <div class="sidebar-header">
+          <h2>Menu</h2>
+        </div>
+        <ul class="sidebar-menu">
+          <li><a href="/" class="sidebar-link active">📊 Dashboard</a></li>
+          <li><a href="/graficos.html" class="sidebar-link">📈 Gráficos</a></li>
+        </ul>
+        <div class="sidebar-footer">
+          <small id="status-sidebar">Online</small>
+        </div>
+      </nav>
+
+      <!-- Main Content -->
+      <div class="main-content">
+        <div class="container">
+      <div class="header">
+        <h1>Dashboard de Monitoramento de Ruído</h1>
+        <p id="status">Carregando dados...</p>
+      </div>
+
+      <details class="accordion" open>
+        <summary>Resumo ao vivo</summary>
+        <div class="section-content">
+          <div id="ambientes" class="grid"></div>
+          <div class="chart-grid">
+            <div class="chart-card">
+              <h3>Tendência (últimas medições)</h3>
+              <canvas id="trendChart" height="170"></canvas>
+            </div>
+            <div class="chart-card">
+              <h3>% de alertas por ambiente</h3>
+              <canvas id="alertRateChart" height="170"></canvas>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="accordion" open>
+        <summary>Cadastro de ambiente</summary>
+        <div class="section-content">
+          <form id="ambienteForm" class="input-row">
+            <input name="nome" placeholder="Nome" required />
+            <input name="localizacao" placeholder="Localização" required />
+            <input name="sensor_id" placeholder="Sensor ID" required />
+            <input name="limite_db" type="number" step="0.1" min="0" value="65" required />
+            <button type="submit">Salvar</button>
+          </form>
+          <div id="formMessage" class="small form-message"></div>
+        </div>
+      </details>
+
+      <details class="accordion">
+        <summary>Medições recentes</summary>
+        <div class="section-content">
+          <table>
+            <thead>
+              <tr>
+                <th>Data/Hora</th>
+                <th>Ambiente</th>
+                <th>Sensor</th>
+                <th>dB</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="medicoesBody"></tbody>
+          </table>
+        </div>
+      </details>
+
+      <details class="accordion">
+        <summary>Alertas recentes</summary>
+        <div class="section-content">
+          <table>
+            <thead>
+              <tr>
+                <th>Data/Hora</th>
+                <th>Ambiente</th>
+                <th>Mensagem</th>
+              </tr>
+            </thead>
+            <tbody id="alertasBody"></tbody>
+          </table>
+        </div>
+      </details>
+
+      <details class="accordion">
+        <summary>Relatórios</summary>
+        <div class="section-content">
+          <div class="input-row report-controls">
+            <label>
+              Janela (horas)
+              <input id="reportHours" type="number" min="1" max="720" value="24" />
+            </label>
+            <button id="refreshReportBtn" type="button">Atualizar resumo</button>
+            <button id="downloadTxtBtn" type="button">Baixar TXT</button>
+          </div>
+
+          <div class="report-box">
+            <h3>Resumo geral</h3>
+            <div id="reportSummary" class="report-grid"></div>
+          </div>
+
+          <div class="report-box">
+            <h3>Resumo por ambiente</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Ambiente</th>
+                  <th>Total medições</th>
+                  <th>Total alertas</th>
+                  <th>% alerta</th>
+                  <th>Média dB</th>
+                  <th>Pico dB</th>
+                </tr>
+              </thead>
+              <tbody id="reportAmbientesBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </details>
+
+      <div class="footer">Atualização automática a cada 5 segundos.</div>
+        </div>
+      </div>
+    </div>
+    <script src="/assets/app.js"></script>
   </body>
 </html>

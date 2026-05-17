@@ -1,144 +1,210 @@
-# Sistema de Monitoramento Acústico IoT - v1.1
+# TCC Monitor de Ruído (Raspberry Pi 3 B+)
 
-<div align="center">
+Aplicação de monitoramento acústico para execução **headless** no Raspberry Pi 3 B+, com baixo custo operacional.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Raspberry Pi](https://img.shields.io/badge/Raspberry%20Pi-B+-c51a4a?logo=raspberry-pi)](https://www.raspberrypi.org/)
-[![Python](https://img.shields.io/badge/Python-3.9+-blue?logo=python)](https://python.org)
-[![Flask](https://img.shields.io/badge/Flask-2.0+-black?logo=flask)](https://flask.palletsprojects.com/)
+## Recursos
 
-**Solução de monitoramento acústico distribuído baseada em IoT para mapeamento e controle de níveis sonoros em tempo real.**
+- Backend Flask + SQLite local
+- Frontend separado em arquivos (`HTML`, `CSS`, `JS`)
+- Dashboard com seções em acordeão para reduzir poluição visual
+- Cadastro e exclusão de ambientes/sensores
+- Monitoramento em tempo real
+- Alertas de limite excedido
+- Gráficos leves (tendência e percentual de alertas)
+- Relatórios com percentuais por período (resumo + download em TXT)
 
-[Funcionalidades](#funcionalidades) •
-[Arquitetura](#arquitetura) •
-[Hardware](#hardware) •
-[Instalação](#instalação) •
-[API](#api) •
-[Contribuição](#contribuição)
+## Estrutura
 
-</div>
+- `code/backend/main.py`: entrypoint da API
+- `code/backend/app/__init__.py`: factory da aplicação
+- `code/backend/app/database.py`: conexão e bootstrap do banco
+- `code/backend/app/services.py`: regras de negócio e relatórios
+- `code/backend/app/routes.py`: rotas HTTP
+- `code/frontend/index.html`: estrutura da interface
+- `code/frontend/assets/style.css`: estilos da interface
+- `code/frontend/assets/app.js`: lógica da interface
+- `code/mock/sensor.py`: mock de sensores
+- `code/deploy/*.service`: serviços `systemd`
 
-## 📋 Sobre o Projeto
+## Requisitos no Raspberry
 
-Este projeto foi desenvolvido como Trabalho de Conclusão de Curso (TCC) em Engenharia de Computação no Instituto Federal da Paraíba (IFPB) - Campus Campina Grande. O sistema permite o monitoramento acústico contínuo de ambientes utilizando sensores conectados a uma Raspberry Pi, com visualização em tempo real e geração de relatórios históricos.
+```bash
+sudo apt update
+sudo apt install -y python3-venv python3-full git
+```
 
-### Autores
+## Instalação
 
-- Daniel Barbosa Vasconcelos
-- Thiago Barbosa de Araujo
-- Victor José Cordeiro de Medeiros
+```bash
+cd ~
+git clone git@github.com:thiagoeu/tcc-monitor-ruido.git
+cd tcc-monitor-ruido
+git checkout code
 
-  <table>
-  <tr>
-    <td align="center">
-      <a href="https://github.com/thiagoeu" target="_blank">
-        <img src="https://avatars.githubusercontent.com/u/95484968?v=4" width="100px;" alt="Avatar Victor"/><br>
-        <sub>
-          <b>Thiago Barbosa de Araujo</b>
-        </sub>
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://github.com/Dcorder123" target="_blank">
-        <img src="https://avatars.githubusercontent.com/u/101361658?v=4" width="100px;" alt="Avatar Daniel"/><br>
-        <sub>
-          <b>Daniel Barbosa Vasconcelos</b>
-        </sub>
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://github.com/victorjcm" target="_blank">
-        <img src="https://avatars.githubusercontent.com/u/79644504?v=4" width="100px;" alt="Avatar Victor"/><br>
-        <sub>
-          <b>Victor José de Medeiros</b>
-        </sub>
-      </a>
-    </td>
-  </tr>
-</table>
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+```
 
-## ✨ Funcionalidades
+## Execução manual
 
-### Monitoramento em Tempo Real
+### Terminal 1 (backend)
 
-- Coleta de dados de pressão sonora a cada 5 segundos
-- Visualização gráfica dos níveis de ruído por ambiente
-- Dashboard interativo com atualização automática
+```bash
+cd ~/tcc-monitor-ruido
+source .venv/bin/activate
+python code/backend/main.py
+```
 
-### Gestão de Ambientes e Sensores
+### Terminal 2 (mock)
 
-- Cadastro, edição e exclusão de ambientes monitorados
-- Configuração personalizada de limites por ambiente/sensor
-- Mapeamento visual dos pontos de monitoramento
+#### Opção A: Modo Dinâmico (Recomendado)
 
-### Sistema de Alertas
+O mock busca **automaticamente** todos os sensores cadastrados no backend, independente do nome. Novos sensores adicionados pelo dashboard são detectados a cada 30 segundos.
 
-- Notificações automáticas quando limites são ultrapassados
-- Alertas visuais no dashboard e no hardware (LEDs/LCD)
-- Registro histórico de violações
+```bash
+cd ~/tcc-monitor-ruido
+source .venv/bin/activate
+python code/mock/sensor.py --api-url http://127.0.0.1:5000/api/medicoes --interval 5 --dynamic
+```
 
-### Relatórios e Análises
+**Vantagens:**
+- Sensores adicionados no dashboard geram leituras automaticamente
+- Não precisa reiniciar o mock ao cadastrar novo sensor
+- Nomenclatura livre: `my-sensor-01`, `Lab_A`, `Sala_Principal` - qualquer nome funciona
+- Faixa de dB calculada dinamicamente baseada no `limite_db` de cada ambiente
 
-- Geração de relatórios em PDF com filtros personalizados
-- Exportação de dados históricos
-- Análise de conformidade com padrões de ruído
+**Output esperado:**
+```
+Iniciando mock: intervalo=5s, modo_dinâmico=True
+✓ Modo DINÂMICO ativado: novos sensores serão detectados automaticamente
+Enviando para: http://127.0.0.1:5000/api/medicoes
+[Ciclo 1] ✓ Detectados 2 sensor(es) do backend
+[Sala Principal] 68.5 dB @ 45-75 -> OK
+[Laboratório] 52.3 dB @ 45-85 -> OK
+```
 
-## 🏗️ Arquitetura
+#### Opção B: Modo Legado (Configuração manual)
 
-O sistema segue uma arquitetura distribuída com processamento local:
+Se preferir especificar sensores explicitamente via linha de comando:
 
-### Componentes Principais
+```bash
+cd ~/tcc-monitor-ruido
+source .venv/bin/activate
+python code/mock/sensor.py --api-url http://127.0.0.1:5000/api/medicoes --interval 5 --sensors e06a-001:45:82,e06a-002:35:78
+```
 
-1. **Camada de Coleta**: Sensores E06A com comunicação RS485
-2. **Camada de Processamento**: Raspberry Pi B+ com backend Flask
-3. **Camada de Armazenamento**: Banco de dados SQLite local
-4. **Camada de Apresentação**: Dashboard web responsivo
+**Formato:** `sensorID:min_dB:max_dB,sensorID2:min_dB:max_dB,...`
 
-## 🔧 Hardware
+⚠️ **Aviso:** Neste modo, sensores novos cadastrados no dashboard **NÃO** geram leituras. Requer reiniciar o mock com a nova configuração.
 
-### Lista de Materiais (BoM)
+---
 
-| Item                 | Quantidade | Descrição                        | Custo Estimado (R$) |
-| -------------------- | ---------- | -------------------------------- | ------------------- |
-| Raspberry Pi B+      | 1          | Servidor central e processamento | 400,00              |
-| Conversor USB-RS485  | 1          | Interface de comunicação         | 29,00               |
-| Sensor E06A          | 1+         | Coleta de dados acústicos        | -                   |
-| Cartão MicroSD 16GB  | 1          | Armazenamento                    | 15,00               |
-| Protoboard e jumpers | 1          | Montagem e conexões              | 10,00               |
-| Caixa impressa 3D    | 1          | Estrutura física                 | 7,00                |
-| **Total Estimado**   |            |                                  | **537,00**          |
+## Como funcionam os sensores
 
-### Especificações Técnicas
+1. **Sem modo `--dynamic`:** O mock só gera leituras para sensores configurados via `--sensors`
+   - Problema: Novo sensor cadastrado no dashboard não recebe simulações
+   - Solução: Reiniciar mock com sensor adicionado
 
-- **Sensor**: E06A com interface RS485
-- **Processador**: Raspberry Pi B+ (512MB RAM)
-- **Comunicação**: RS485 para coleta, Wi-Fi/Ethernet para web
-- **Armazenamento**: SQLite em cartão SD
+2. **Com modo `--dynamic`:** O mock faz `GET /api/ambientes` a cada 30 segundos
+   - Busca lista atualizada de sensores do backend
+   - Extrai `sensor_id` e `limite_db` de cada ambiente
+   - Calcula faixa de dB automaticamente: `[limite - 20, limite + 10]`
+   - Gera leituras contínuas para todos (12% de chance de spike +5-12 dB acima da faixa)
 
-## 💻 Software
+**Nome dos sensores:** No dashboard, você pode usar qualquer nomenclatura. O backend aceita qualquer `sensor_id`. Exemplos válidos:
+- `e06a-001` (padrão)
+- `Lab_A`, `Sala Principal`, `my-sensor-01`
+- Caracteres especiais são aceitos
 
-### Stack Tecnológica
+## Acesso ao dashboard
 
-#### Backend
+Abra em outro dispositivo da mesma rede local:
 
-- **Framework**: Flask (Python 3.9+)
-- **Banco de Dados**: SQLite + SQLAlchemy ORM
-- **Comunicação Serial**: PySerial para leitura dos sensores
+```text
+http://IP_DO_RASPBERRY:5000
+```
 
-#### Frontend
+Exemplo:
 
-### Backend
+```text
+http://192.168.18.211:5000
+```
 
-#### Infraestrutura
+## Relatórios
 
-- **Container**: Docker (opcional)
-- **CI/CD**: GitHub Actions
-- **Monitoramento**: Prometheus + Grafana (planejado)
+### Resumo JSON por janela de horas
 
-## 📦 Instalação
+```bash
+curl "http://127.0.0.1:5000/api/relatorios/resumo?hours=24"
+```
 
-### Pré-requisitos
+### Download do relatório TXT
 
-- Raspberry Pi B+ com Raspbian OS
-- Python 3.9+
-- Git
+```bash
+curl -L "http://127.0.0.1:5000/api/relatorios/txt?hours=24" -o relatorio.txt
+```
+
+No dashboard, a seção **Relatórios** já mostra percentuais e permite baixar o TXT.
+
+## API principal
+
+- `GET /health`
+- `GET /api/ambientes`
+- `POST /api/ambientes`
+- `PUT /api/ambientes/{id}`
+- `DELETE /api/ambientes/{id}`
+- `POST /api/medicoes`
+- `GET /api/monitoramento`
+- `GET /api/alertas`
+- `GET /api/relatorios/resumo?hours=24`
+- `GET /api/relatorios/txt?hours=24`
+
+## Rodar no boot com systemd
+
+Os serviços em `code/deploy` estão ajustados para:
+
+- usuário `ruido`
+- venv em `/home/ruido/tcc-monitor-ruido/.venv`
+- modo **dinâmico** do mock (detecta sensores automaticamente do backend)
+
+Instalação:
+
+```bash
+cd ~/tcc-monitor-ruido
+sudo cp code/deploy/monitor-ruido-backend.service /etc/systemd/system/
+sudo cp code/deploy/monitor-ruido-mock.service /etc/systemd/system/
+
+sudo systemctl daemon-reload
+sudo systemctl enable monitor-ruido-backend.service
+sudo systemctl enable monitor-ruido-mock.service
+sudo systemctl restart monitor-ruido-backend.service
+sudo systemctl restart monitor-ruido-mock.service
+```
+
+**Para usar modo legado (sensores fixos):** Editar `/etc/systemd/system/monitor-ruido-mock.service` e remover `--dynamic`:
+
+```ini
+ExecStart=/home/ruido/tcc-monitor-ruido/.venv/bin/python ... --sensors e06a-001:45:82,e06a-002:35:78
+```
+
+Depois recarregar:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl restart monitor-ruido-mock.service
+```
+
+Logs:
+
+```bash
+sudo journalctl -u monitor-ruido-backend.service -f
+sudo journalctl -u monitor-ruido-mock.service -f
+```
+
+## Observações
+
+- O backend faz bootstrap automático dos sensores padrão `e06a-001` e `e06a-002`.
+- Para testes de TCC, o servidor Flask de desenvolvimento é suficiente.
+- Comando correto para executar é `python`, não `run`.

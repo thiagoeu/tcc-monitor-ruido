@@ -1,0 +1,9 @@
+# Python
+__pycache__/
+*.pyc
+
+# Banco local de execução
+code/backend/ruido.db
+
+# Ambiente virtual
+.venv/

@@ -1,7 +1,5 @@
 from pathlib import Path
-
 from flask import Flask
-
 from .database import init_db, seed_default_environments
 from .routes import main_bp
 

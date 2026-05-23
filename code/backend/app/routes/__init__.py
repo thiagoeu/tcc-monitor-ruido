@@ -2,7 +2,7 @@ from flask import Blueprint
 
 main_bp = Blueprint("main", __name__)
 
-from . import frontend
+
 from . import health
 from . import ambientes
 from . import medicoes

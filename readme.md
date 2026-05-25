@@ -57,6 +57,70 @@ source .venv/bin/activate
 python code/backend/main.py
 ```
 
+## Conexão física do sensor no Raspberry Pi 3 B+
+
+O projeto também suporta um sensor Modbus RTU físico ligado direto na UART do Raspberry Pi. Se o módulo do sensor operar em TTL 5V na linha TX, use divisor de tensão ou conversor de nível lógico antes de entrar no RX do Pi.
+
+### Ligações recomendadas
+
+| Pino do Sensor | Pino do Raspberry Pi 3B (físico) | Nome no Raspberry Pi |
+| --- | --- | --- |
+| VCC | Pino 2 ou 4 | 5V |
+| GND | Pino 6, 9, 14, 20, 25, 30, 34 ou 39 | GND |
+| TX | Pino 10, passando por divisor de tensão se necessário | GPIO15 (RX) |
+| RX | Pino 8 | GPIO14 (TX) |
+
+### Liberando a porta serial
+
+1. Abra o configurador do Raspberry Pi:
+
+```bash
+sudo raspi-config
+```
+
+2. Vá em Interface Options e depois em Serial Port.
+3. Quando perguntar se o console de login deve ficar acessível pela serial, responda Não.
+4. Quando perguntar se o hardware da porta serial deve ser habilitado, responda Sim.
+
+Depois, desative o Bluetooth na UART editando o arquivo de configuração:
+
+```bash
+sudo nano /boot/config.txt
+```
+
+Em sistemas mais novos, use:
+
+```bash
+sudo nano /boot/firmware/config.txt
+```
+
+Adicione a linha abaixo no final do arquivo:
+
+```text
+dtoverlay=disable-bt
+```
+
+Reinicie o Raspberry Pi:
+
+```bash
+sudo reboot
+```
+
+Após o reboot, a porta serial do hardware fica disponível em `/dev/ttyAMA0`.
+
+### Uso com o sensor físico
+
+O leitor físico já está preparado para Modbus RTU via UART e usa `/dev/ttyAMA0` por padrão. A comunicação padrão é `9600 8N1`, com endereço Modbus `1` e registrador `0` como valor inicial configurável.
+
+Exemplo de execução:
+
+```bash
+cd code
+python sensor/sensor.py --api-url http://127.0.0.1:5000/api/medicoes --port /dev/ttyAMA0 --baudrate 9600 --slave-addr 1 --register 0
+```
+
+Nesse modo, não há controle de direção de RS485, porque a serial TTL lida diretamente com transmissão e recepção.
+
 ### Terminal 2 (mock)
 
 #### Opção A: Modo Dinâmico (Recomendado)

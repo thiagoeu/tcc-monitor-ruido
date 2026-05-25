@@ -1,4 +1,5 @@
 from pathlib import Path
+from threading import Lock
 
 from ..database import (
     get_connection,
@@ -15,6 +16,9 @@ try:
     SERIAL_SCAN_AVAILABLE = True
 except ImportError:
     pass
+
+
+SERIAL_SCAN_LOCK = Lock()
 
 def get_monitoramento(limit):
     connection = get_connection()
@@ -118,7 +122,14 @@ def _probe_modbus_id(port, slave_addr, baudrate, timeout, registers, function_co
                 "register": register,
                 "raw_value": value,
             }
-        except (minimalmodbus.ModbusException, serial.SerialException, ValueError):
+        except (
+            minimalmodbus.ModbusException,
+            serial.SerialException,
+            ValueError,
+            TypeError,
+            OSError,
+            AttributeError,
+        ):
             continue
 
     return None
@@ -162,20 +173,22 @@ def scan_sensores_fisicos(
 
     encontrados = []
 
-    for slave_addr in range(start_id, end_id + 1):
-        try:
-            found = _probe_modbus_id(
-                port,
-                slave_addr,
-                baudrate,
-                timeout,
-                registers,
-                function_code,
-            )
-        except RuntimeError as exc:
-            raise ValueError(str(exc)) from exc
-        if found:
-            encontrados.append(found)
+    # Evita leituras concorrentes da mesma UART quando houver multiplas requisicoes.
+    with SERIAL_SCAN_LOCK:
+        for slave_addr in range(start_id, end_id + 1):
+            try:
+                found = _probe_modbus_id(
+                    port,
+                    slave_addr,
+                    baudrate,
+                    timeout,
+                    registers,
+                    function_code,
+                )
+            except RuntimeError as exc:
+                raise ValueError(str(exc)) from exc
+            if found:
+                encontrados.append(found)
 
     return {
         "porta": port,

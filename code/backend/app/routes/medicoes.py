@@ -126,6 +126,8 @@ def http_scan_sensores_fisicos():
         return json_error(str(exc), 400)
     except RuntimeError as exc:
         return json_error(str(exc), 500)
+    except Exception:
+        return json_error("Falha inesperada ao escanear sensores fisicos.", 500)
 
     return jsonify(result)
 

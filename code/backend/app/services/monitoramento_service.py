@@ -91,14 +91,19 @@ def _list_serial_ports():
 
 
 def _probe_modbus_id(port, slave_addr, baudrate, timeout, registers, function_code):
-    instrument = minimalmodbus.Instrument(port, slave_addr)
-    instrument.serial.baudrate = baudrate
-    instrument.serial.bytesize = 8
-    instrument.serial.parity = serial.PARITY_NONE
-    instrument.serial.stopbits = 1
-    instrument.serial.timeout = timeout
-    instrument.mode = minimalmodbus.MODE_RTU
-    instrument.close_port_after_each_call = True
+    try:
+        instrument = minimalmodbus.Instrument(port, slave_addr)
+        instrument.serial.baudrate = baudrate
+        instrument.serial.bytesize = 8
+        instrument.serial.parity = serial.PARITY_NONE
+        instrument.serial.stopbits = 1
+        instrument.serial.timeout = timeout
+        instrument.mode = minimalmodbus.MODE_RTU
+        instrument.close_port_after_each_call = True
+    except (serial.SerialException, OSError, ValueError) as exc:
+        raise RuntimeError(
+            f"Nao foi possivel abrir a porta serial '{port}': {exc}"
+        ) from exc
 
     for register in registers:
         try:
@@ -143,17 +148,32 @@ def scan_sensores_fisicos(
         raise ValueError("Informe ao menos um registrador para teste.")
 
     portas = _list_serial_ports()
+    portas_disponiveis = {item["device"] for item in portas}
+
+    if port not in portas_disponiveis:
+        if portas_disponiveis:
+            sugestoes = ", ".join(sorted(portas_disponiveis))
+            raise ValueError(
+                f"Porta serial '{port}' nao encontrada. Portas detectadas: {sugestoes}"
+            )
+        raise ValueError(
+            f"Porta serial '{port}' nao encontrada e nenhuma porta serial foi detectada."
+        )
+
     encontrados = []
 
     for slave_addr in range(start_id, end_id + 1):
-        found = _probe_modbus_id(
-            port,
-            slave_addr,
-            baudrate,
-            timeout,
-            registers,
-            function_code,
-        )
+        try:
+            found = _probe_modbus_id(
+                port,
+                slave_addr,
+                baudrate,
+                timeout,
+                registers,
+                function_code,
+            )
+        except RuntimeError as exc:
+            raise ValueError(str(exc)) from exc
         if found:
             encontrados.append(found)
 

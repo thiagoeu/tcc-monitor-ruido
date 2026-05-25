@@ -100,7 +100,7 @@ def http_alertas():
 
 @main_bp.route("/api/sensores/fisicos", methods=["GET"])
 def http_scan_sensores_fisicos():
-    port = request.args.get("port", "/dev/ttyAMA0")
+    port = request.args.get("port", "/dev/serial0")
     baudrate = parse_int(request.args.get("baudrate", 9600), 9600, 300, 115200)
     start_id = parse_int(request.args.get("start_id", 1), 1, 1, 247)
     end_id = parse_int(request.args.get("end_id", 32), 32, 1, 247)

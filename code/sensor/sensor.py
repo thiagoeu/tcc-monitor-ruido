@@ -152,8 +152,8 @@ def build_parser():
     )
     parser.add_argument(
         "--port",
-        default="/dev/ttyAMA0",
-        help="Porta serial física onde o sensor está conectado (padrão: /dev/ttyAMA0)",
+        default="/dev/serial0",
+        help="Porta serial física onde o sensor está conectado (padrão: /dev/serial0)",
     )
     parser.add_argument(
         "--sensor-id",

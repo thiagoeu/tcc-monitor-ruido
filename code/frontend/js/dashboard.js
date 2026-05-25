@@ -13,7 +13,7 @@ import { drawTrendChart, drawAlertRateChart } from "./charts.js";
 let state = {
   reportHours: 24,
   scan: {
-    port: "/dev/ttyAMA0",
+    port: "/dev/serial0",
     baudrate: 9600,
     start_id: 1,
     end_id: 32,
@@ -87,7 +87,7 @@ function attachSensorFillHandlers() {
 
 function getScanParamsFromUI() {
   return {
-    port: document.getElementById("scanPort")?.value?.trim() || "/dev/ttyAMA0",
+    port: document.getElementById("scanPort")?.value?.trim() || "/dev/serial0",
     baudrate: Number(document.getElementById("scanBaudrate")?.value || 9600),
     start_id: Number(document.getElementById("scanStartId")?.value || 1),
     end_id: Number(document.getElementById("scanEndId")?.value || 32),
@@ -323,6 +323,11 @@ function initSensorScanControls() {
   document
     .getElementById("scanSensoresBtn")
     .addEventListener("click", loadSensoresFisicos);
+
+  document.getElementById("sensoresResumo").textContent =
+    "Clique em 'Escanear agora' para buscar sensores fisicos na serial.";
+  document.getElementById("sensoresBody").innerHTML =
+    '<tr><td colspan="4">Aguardando varredura manual.</td></tr>';
 }
 
 function bootstrap() {
@@ -332,7 +337,6 @@ function bootstrap() {
   initReportControls();
   initSensorScanControls();
   loadDashboard();
-  loadSensoresFisicos();
   loadReport();
   setInterval(loadDashboard, 5000);
 }

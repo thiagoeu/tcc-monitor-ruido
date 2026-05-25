@@ -18,8 +18,8 @@ def build_parser():
     )
     parser.add_argument(
         "--port",
-        default="/dev/ttyAMA0",
-        help="Porta serial para varredura (padrao: /dev/ttyAMA0)",
+        default="/dev/serial0",
+        help="Porta serial para varredura (padrao: /dev/serial0)",
     )
     parser.add_argument(
         "--baudrate",

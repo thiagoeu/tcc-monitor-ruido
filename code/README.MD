@@ -228,6 +228,33 @@ Após isso, a porta serial fica disponível em `/dev/ttyAMA0`.
 
 O script físico já usa `/dev/ttyAMA0` por padrão, com Modbus RTU em `9600 8N1`.
 
+Antes de configurar, descubra quais portas existem e quais IDs Modbus respondem.
+
+Listar portas seriais detectadas:
+
+```bash
+cd code
+python sensor/scan_modbus_ids.py --list-ports
+```
+
+Escanear IDs Modbus na UART do Raspberry Pi:
+
+```bash
+cd code
+python sensor/scan_modbus_ids.py --port /dev/ttyAMA0 --baudrate 9600 --start-id 1 --end-id 32 --registers 0,1
+```
+
+Se nao encontrar, tente input register (function code 4):
+
+```bash
+cd code
+python sensor/scan_modbus_ids.py --port /dev/ttyAMA0 --baudrate 9600 --start-id 1 --end-id 32 --registers 0,1 --function-code 4
+```
+
+Importante:
+- `sensor_id` no dashboard e um identificador textual (ex: `lab-a-01`).
+- `--slave-addr` no script do sensor e o ID Modbus descoberto no scanner.
+
 Exemplo:
 
 ```bash

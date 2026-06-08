@@ -1,4 +1,5 @@
-// charts.js - funções de desenho dos gráficos (canvas)
+//funções de desenho dos gráficos (canvas)
+
 import { formatDb } from "./utils.js";
 
 export function drawEmptyChart(canvas, message) {

@@ -1,0 +1,80 @@
+@startuml
+left to right direction
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam usecase {
+  BackgroundColor #F9FBFF
+  BorderColor #3B4A6B
+  ArrowColor #3B4A6B
+}
+skinparam actor {
+  BorderColor #2E3440
+}
+
+title Caso de Uso - Sistema de Monitoramento de Ruido (Operacao Real)
+
+actor "Gerenciador" as G
+actor "Sensor E06A (Real)" as S
+actor "Interface RS485" as R
+actor "Sinalizacao LED/LCD" as L
+
+rectangle "Sistema de Monitoramento de Ruido\n(Backend + Dashboard no Raspberry Pi)" {
+  usecase "Cadastrar ambiente" as UC_CAD
+  usecase "Editar ambiente" as UC_EDT
+  usecase "Remover ambiente" as UC_DEL
+  usecase "Ativar/Desativar ambiente" as UC_ATV
+
+  usecase "Monitorar ruido em tempo real" as UC_MON
+  usecase "Receber medicao de sensor real" as UC_RX
+  usecase "Validar integridade da leitura\n(checksum/protocolo)" as UC_VAL
+  usecase "Registrar medicao" as UC_REG
+  usecase "Comparar leitura com\nlimite configurado" as UC_CMP
+  
+  usecase "Gerar alerta de excesso de ruido" as UC_ALT
+  usecase "Acionar indicacao fisica\n(LED/LCD)" as UC_LED
+  usecase "Exibir alerta visual\nno dashboard" as UC_WEB
+
+  usecase "Consultar monitoramento\ne alertas recentes" as UC_CON
+  usecase "Gerar resumo estatistico" as UC_RES
+  usecase "Baixar relatorio TXT" as UC_TXT
+}
+
+G --> UC_CAD
+G --> UC_EDT
+G --> UC_DEL
+G --> UC_ATV
+G --> UC_MON
+G --> UC_CON
+G --> UC_RES
+G --> UC_TXT
+
+S --> UC_RX
+R --> UC_RX
+L --> UC_LED
+
+UC_MON ..> UC_RX : <<include>>
+UC_MON ..> UC_VAL : <<include>>
+UC_MON ..> UC_REG : <<include>>
+UC_MON ..> UC_CMP : <<include>>
+
+UC_ALT ..> UC_CMP : <<extend>>
+UC_ALT ..> UC_LED : <<include>>
+UC_ALT ..> UC_WEB : <<include>>
+
+UC_CON ..> UC_MON : <<include>>
+UC_RES ..> UC_CON : <<include>>
+UC_TXT ..> UC_RES : <<include>>
+
+note right of UC_RX
+Sem mock: a medicao vem do
+sensor E06A fisico via RS485.
+end note
+
+note bottom of UC_ALT
+Fluxo de excecao:
+quando dB > limite do ambiente,
+o sistema registra alerta e
+aciona indicacao local/remota.
+end note
+
+@enduml

@@ -1,0 +1,60 @@
+flowchart LR
+  %% Caso de Uso - Sistema de Monitoramento de Ruido (Operacao Real)
+
+  G["Gerenciador"]
+  S["Sensor E06A (Real)"]
+  R["Interface RS485"]
+  L["Sinalizacao LED/LCD"]
+
+  subgraph SYS["Sistema de Monitoramento de Ruido<br/>(Backend + Dashboard no Raspberry Pi)"]
+    UC_CAD([Cadastrar ambiente])
+    UC_EDT([Editar ambiente])
+    UC_DEL([Remover ambiente])
+    UC_ATV([Ativar/Desativar ambiente])
+
+    UC_MON([Monitorar ruido em tempo real])
+    UC_RX([Receber medicao de sensor real])
+    UC_VAL(["Validar integridade da leitura<br/>(checksum/protocolo)"])
+    UC_REG([Registrar medicao])
+    UC_CMP(["Comparar leitura com<br/>limite configurado"])
+
+    UC_ALT([Gerar alerta de excesso de ruido])
+    UC_LED(["Acionar indicacao fisica<br/>(LED/LCD)"])
+    UC_WEB(["Exibir alerta visual<br/>no dashboard"])
+
+    UC_CON(["Consultar monitoramento<br/>e alertas recentes"])
+    UC_RES([Gerar resumo estatistico])
+    UC_TXT([Baixar relatorio TXT])
+  end
+
+  G --> UC_CAD
+  G --> UC_EDT
+  G --> UC_DEL
+  G --> UC_ATV
+  G --> UC_MON
+  G --> UC_CON
+  G --> UC_RES
+  G --> UC_TXT
+
+  S --> UC_RX
+  R --> UC_RX
+  L --> UC_LED
+
+  UC_MON -- "<<include>>" --> UC_RX
+  UC_MON -- "<<include>>" --> UC_VAL
+  UC_MON -- "<<include>>" --> UC_REG
+  UC_MON -- "<<include>>" --> UC_CMP
+
+  UC_ALT -- "<<extend>>" --> UC_CMP
+  UC_ALT -- "<<include>>" --> UC_LED
+  UC_ALT -- "<<include>>" --> UC_WEB
+
+  UC_CON -- "<<include>>" --> UC_MON
+  UC_RES -- "<<include>>" --> UC_CON
+  UC_TXT -- "<<include>>" --> UC_RES
+
+  N1["Sem mock: a medicao vem do\nsensor E06A fisico via RS485."]
+  N2["Fluxo de excecao:\nquando dB > limite do ambiente,\no sistema registra alerta e\naciona indicacao local/remota."]
+
+  UC_RX -.-> N1
+  UC_ALT -.-> N2

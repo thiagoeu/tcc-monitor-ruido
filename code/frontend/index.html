@@ -50,6 +50,9 @@
           <details class="accordion" open>
             <summary>Cadastro de ambiente</summary>
             <div class="section-content">
+              <p class="small helper-text">
+                Dica: no dashboard, Sensor ID e um identificador textual (ex: sala-a-01).
+              </p>
               <form id="ambienteForm" class="input-row">
                 <input name="nome" placeholder="Nome" required />
                 <input name="localizacao" placeholder="Localização" required />
@@ -65,6 +68,42 @@
                 <button type="submit">Salvar</button>
               </form>
               <div id="formMessage" class="small form-message"></div>
+            </div>
+          </details>
+
+          <details class="accordion" open>
+            <summary>Sensores físicos conectados (UART)</summary>
+            <div class="section-content">
+              <p class="small helper-text">
+                Esta lista vem da porta serial do Raspberry Pi e mostra IDs Modbus detectados no hardware.
+              </p>
+              <div class="input-row sensores-scan-controls">
+                <input id="scanPort" value="/dev/serial0" placeholder="Porta serial" />
+                <input id="scanBaudrate" type="number" min="300" max="115200" value="9600" placeholder="Baudrate" />
+                <input id="scanStartId" type="number" min="1" max="247" value="1" placeholder="ID inicial" />
+                <input id="scanEndId" type="number" min="1" max="247" value="32" placeholder="ID final" />
+                <input id="scanRegisters" value="0,1" placeholder="Registradores (ex: 0,1)" />
+                <select id="scanFunctionCode">
+                  <option value="3">Function 3 (Holding)</option>
+                  <option value="4">Function 4 (Input)</option>
+                </select>
+                <button id="scanSensoresBtn" type="button">Escanear agora</button>
+              </div>
+              <div id="sensoresResumo" class="small helper-text"></div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>ID Modbus</th>
+                      <th>Registrador</th>
+                      <th>Valor bruto</th>
+                      <th>Ação</th>
+                    </tr>
+                  </thead>
+                  <tbody id="sensoresBody"></tbody>
+                </table>
+              </div>
+              <div id="portasResumo" class="small helper-text"></div>
             </div>
           </details>
 

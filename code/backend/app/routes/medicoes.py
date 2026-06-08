@@ -4,6 +4,7 @@ from app.services import (
     create_medicao,
     get_monitoramento,
     list_alertas,
+    scan_sensores_fisicos,
 )
 
 from . import main_bp
@@ -23,6 +24,35 @@ def parse_int(value, default, min_value, max_value):
         parsed = default
 
     return max(min_value, min(max_value, parsed))
+
+
+def parse_float(value, default, min_value, max_value):
+    try:
+        parsed = float(value)
+
+    except (TypeError, ValueError):
+        parsed = default
+
+    return max(min_value, min(max_value, parsed))
+
+
+def parse_registers(value):
+    raw = str(value or "0,1")
+    registers = []
+
+    for chunk in raw.split(","):
+        chunk = chunk.strip()
+        if not chunk:
+            continue
+        try:
+            registers.append(int(chunk))
+        except ValueError as exc:
+            raise ValueError("registers deve conter apenas inteiros separados por virgula.") from exc
+
+    if not registers:
+        raise ValueError("registers deve conter ao menos um registrador.")
+
+    return registers
 
 
 @main_bp.route("/api/medicoes", methods=["POST"])
@@ -68,8 +98,43 @@ def http_alertas():
     return jsonify(list_alertas(limit))
 
 
+@main_bp.route("/api/sensores/fisicos", methods=["GET"])
+def http_scan_sensores_fisicos():
+    port = request.args.get("port", "/dev/serial0")
+    baudrate = parse_int(request.args.get("baudrate", 9600), 9600, 300, 115200)
+    start_id = parse_int(request.args.get("start_id", 1), 1, 1, 247)
+    end_id = parse_int(request.args.get("end_id", 32), 32, 1, 247)
+    function_code = parse_int(request.args.get("function_code", 3), 3, 3, 4)
+    timeout = parse_float(request.args.get("timeout", 0.25), 0.25, 0.05, 2.0)
+
+    try:
+        registers = parse_registers(request.args.get("registers", "0,1"))
+    except ValueError as exc:
+        return json_error(str(exc), 400)
+
+    try:
+        result = scan_sensores_fisicos(
+            port=port,
+            baudrate=baudrate,
+            start_id=start_id,
+            end_id=end_id,
+            registers=registers,
+            function_code=function_code,
+            timeout=timeout,
+        )
+    except ValueError as exc:
+        return json_error(str(exc), 400)
+    except RuntimeError as exc:
+        return json_error(str(exc), 500)
+    except Exception:
+        return json_error("Falha inesperada ao escanear sensores fisicos.", 500)
+
+    return jsonify(result)
+
+
 @main_bp.route("/api/medicoes", methods=["OPTIONS"])
 @main_bp.route("/api/monitoramento", methods=["OPTIONS"])
 @main_bp.route("/api/alertas", methods=["OPTIONS"])
+@main_bp.route("/api/sensores/fisicos", methods=["OPTIONS"])
 def medicoes_options():
     return ("", 204)

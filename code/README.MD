@@ -182,6 +182,90 @@ Saída esperada:
 
 ---
 
+# Sensor físico via UART do Raspberry Pi
+
+O projeto também suporta um sensor Modbus RTU físico conectado diretamente na UART do Raspberry Pi 3 B+.
+
+## Conexão física
+
+Se o sensor trabalhar em 5V no TX, use divisor de tensão ou conversor de nível lógico antes de conectar ao RX do Raspberry Pi.
+
+| Pino do Sensor | Pino do Raspberry Pi 3B (físico) | Nome no Raspberry Pi |
+| --- | --- | --- |
+| VCC | Pino 2 ou 4 | 5V |
+| GND | Pino 6, 9, 14, 20, 25, 30, 34 ou 39 | GND |
+| TX | Pino 10 | GPIO15 (RX) |
+| RX | Pino 8 | GPIO14 (TX) |
+
+## Habilitando a serial
+
+No Raspberry Pi, execute:
+
+```bash
+sudo raspi-config
+```
+
+Em Interface Options, abra Serial Port e responda:
+
+- Console de login pela serial: Não
+- Hardware da serial: Sim
+
+Depois, desative o Bluetooth na UART adicionando a linha abaixo ao final de `/boot/config.txt` ou `/boot/firmware/config.txt`:
+
+```text
+dtoverlay=disable-bt
+```
+
+Reinicie o sistema:
+
+```bash
+sudo reboot
+```
+
+Após isso, a porta serial fica disponível em `/dev/ttyAMA0`.
+
+## Execução do leitor físico
+
+O script físico já usa `/dev/ttyAMA0` por padrão, com Modbus RTU em `9600 8N1`.
+
+Antes de configurar, descubra quais portas existem e quais IDs Modbus respondem.
+
+Listar portas seriais detectadas:
+
+```bash
+cd code
+python sensor/scan_modbus_ids.py --list-ports
+```
+
+Escanear IDs Modbus na UART do Raspberry Pi:
+
+```bash
+cd code
+python sensor/scan_modbus_ids.py --port /dev/ttyAMA0 --baudrate 9600 --start-id 1 --end-id 32 --registers 0,1
+```
+
+Se nao encontrar, tente input register (function code 4):
+
+```bash
+cd code
+python sensor/scan_modbus_ids.py --port /dev/ttyAMA0 --baudrate 9600 --start-id 1 --end-id 32 --registers 0,1 --function-code 4
+```
+
+Importante:
+- `sensor_id` no dashboard e um identificador textual (ex: `lab-a-01`).
+- `--slave-addr` no script do sensor e o ID Modbus descoberto no scanner.
+
+Exemplo:
+
+```bash
+cd code
+python sensor/sensor.py --api-url http://127.0.0.1:5000/api/medicoes --port /dev/ttyAMA0 --baudrate 9600 --slave-addr 1 --register 0
+```
+
+Esse modo não usa os sinais de controle do RS485, porque a UART TTL do Raspberry Pi faz a comunicação diretamente.
+
+---
+
 # Banco de Dados
 
 O sistema utiliza SQLite.

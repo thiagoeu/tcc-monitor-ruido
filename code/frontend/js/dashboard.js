@@ -1,6 +1,7 @@
 // dashboard.js - lógica da página inicial (index.html)
 import {
   fetchMonitoramento,
+  fetchSensoresFisicos,
   fetchRelatorioResumo,
   criarAmbiente,
   excluirAmbiente,
@@ -9,7 +10,113 @@ import {
 import { toLocalDate, formatDb, statusTag } from "./utils.js";
 import { drawTrendChart, drawAlertRateChart } from "./charts.js";
 
-let state = { reportHours: 24 };
+let state = {
+  reportHours: 24,
+  scan: {
+    port: "/dev/serial0",
+    baudrate: 9600,
+    start_id: 1,
+    end_id: 32,
+    registers: "0,1",
+    function_code: 3,
+  },
+};
+
+function renderSensoresFisicos(scanResult) {
+  const tbody = document.getElementById("sensoresBody");
+  const resumo = document.getElementById("sensoresResumo");
+  const portasResumo = document.getElementById("portasResumo");
+  const sensores = scanResult?.sensores || [];
+  const portas = scanResult?.portas_detectadas || [];
+
+  resumo.textContent =
+    `Varredura em ${scanResult.porta} (${scanResult.baudrate} 8N1): ` +
+    `${scanResult.total_encontrados} sensor(es) físico(s) encontrado(s).`;
+
+  if (!sensores.length) {
+    tbody.innerHTML = '<tr><td colspan="4">Nenhum ID Modbus respondeu nesta varredura.</td></tr>';
+  } else {
+    tbody.innerHTML = sensores
+    .map(
+      (sensor) => `
+    <tr>
+      <td><strong>${sensor.id_modbus}</strong></td>
+      <td>${sensor.register}</td>
+      <td>${sensor.raw_value}</td>
+      <td>
+        <button
+          type="button"
+          class="ghost-btn"
+          data-fill-sensor-id="${sensor.id_modbus}"
+        >
+          Preencher sensor_id
+        </button>
+      </td>
+    </tr>
+  `,
+    )
+    .join("");
+  }
+
+  if (!portas.length) {
+    portasResumo.textContent = "Portas detectadas: nenhuma.";
+  } else {
+    const labels = portas.map((porta) => porta.device).join(", ");
+    portasResumo.textContent = `Portas detectadas: ${labels}`;
+  }
+
+  attachSensorFillHandlers();
+}
+
+function attachSensorFillHandlers() {
+  document.querySelectorAll("[data-fill-sensor-id]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const sensorId = button.getAttribute("data-fill-sensor-id") || "";
+      const form = document.getElementById("ambienteForm");
+      const field = form?.elements?.sensor_id;
+      if (!field) return;
+
+      field.value = sensorId;
+      field.focus();
+
+      const formMessage = document.getElementById("formMessage");
+      formMessage.textContent = `sensor_id preenchido com '${sensorId}'. Edite se quiser outro nome.`;
+    });
+  });
+}
+
+function getScanParamsFromUI() {
+  return {
+    port: document.getElementById("scanPort")?.value?.trim() || "/dev/serial0",
+    baudrate: Number(document.getElementById("scanBaudrate")?.value || 9600),
+    start_id: Number(document.getElementById("scanStartId")?.value || 1),
+    end_id: Number(document.getElementById("scanEndId")?.value || 32),
+    registers: document.getElementById("scanRegisters")?.value?.trim() || "0,1",
+    function_code: Number(document.getElementById("scanFunctionCode")?.value || 3),
+  };
+}
+
+async function loadSensoresFisicos() {
+  const resumo = document.getElementById("sensoresResumo");
+  const button = document.getElementById("scanSensoresBtn");
+  const params = getScanParamsFromUI();
+
+  state.scan = params;
+  resumo.textContent = "Escaneando sensores físicos na serial...";
+  button.disabled = true;
+
+  try {
+    const result = await fetchSensoresFisicos(params);
+    renderSensoresFisicos(result);
+  } catch (error) {
+    document.getElementById("sensoresBody").innerHTML =
+      `<tr><td colspan="4">Falha ao escanear: ${error.message}</td></tr>`;
+    document.getElementById("portasResumo").textContent = "";
+    resumo.textContent = "Não foi possível ler os sensores físicos agora.";
+  } finally {
+    button.disabled = false;
+  }
+}
 
 function renderAmbientes(ambientes, ultimaPorAmbiente) {
   const container = document.getElementById("ambientes");
@@ -149,7 +256,8 @@ function renderReportSummary(report) {
 async function loadDashboard() {
   try {
     const data = await fetchMonitoramento(80);
-    renderAmbientes(data.ambientes || [], data.ultima_por_ambiente || {});
+    const ambientes = data.ambientes || [];
+    renderAmbientes(ambientes, data.ultima_por_ambiente || {});
     renderMedicoes(data.medicoes || []);
     renderAlertas(data.alertas || []);
     drawTrendChart(data.medicoes || []);
@@ -211,11 +319,23 @@ function initReportControls() {
   );
 }
 
+function initSensorScanControls() {
+  document
+    .getElementById("scanSensoresBtn")
+    .addEventListener("click", loadSensoresFisicos);
+
+  document.getElementById("sensoresResumo").textContent =
+    "Clique em 'Escanear agora' para buscar sensores fisicos na serial.";
+  document.getElementById("sensoresBody").innerHTML =
+    '<tr><td colspan="4">Aguardando varredura manual.</td></tr>';
+}
+
 function bootstrap() {
   document
     .getElementById("ambienteForm")
     .addEventListener("submit", submitAmbiente);
   initReportControls();
+  initSensorScanControls();
   loadDashboard();
   loadReport();
   setInterval(loadDashboard, 5000);

@@ -1,0 +1,96 @@
+@startuml
+title "Casos de Uso - Sistema de Monitoramento de Ruído do IFPB-CG"
+
+left to right direction
+skinparam packageStyle rectangle
+
+' Atores (baseado no seu documento)
+actor "Administrador" as ADMIN
+actor "Usuário\n(Professor /\n Apoio Acadêmico)" as USUARIO
+actor "Ponto Fixo\n(Raspberry Pi)" as SENSOR
+actor "App Mobile" as MOBILE
+
+rectangle "Sistema de Monitoramento de Ruído" {
+  
+  package "Gestão (RF-01, RF-02)" {
+    usecase "Gerenciar Ambientes" as UC1
+    usecase "Cadastrar ambiente" as UC1a
+    usecase "Editar ambiente" as UC1b
+    usecase "Excluir ambiente" as UC1c
+    usecase "Configurar limites por ambiente" as UC2
+    usecase "(40 dB conforto / 50 dB aceitável)"
+  }
+  
+  package "Coleta de Dados (RF-04, RFH-01, RFH-02, RFM-01)" {
+    usecase "Coletar ruído contínuo" as UC3
+    usecase "Calcular nível em dB(A)" as UC4
+    usecase "Medir ruído via mobile" as UC5
+    usecase "Enviar medição" as UC6
+    usecase "(sem dados pessoais)"
+  }
+  
+  package "Monitoramento e Alertas (RF-03, RF-05)" {
+    usecase "Registrar violações" as UC7
+    usecase "Histórico de ultrapassagens" as UC8
+    usecase "Exibir alerta visual no dashboard" as UC9
+    usecase "API REST" as UC10
+  }
+  
+  package "Visualização (RF-03, RF-05, RFH-05)" {
+    usecase "Visualizar dashboard web" as UC11
+    usecase "Ver ruído em tempo real" as UC12
+    usecase "Ver display TFT local" as UC13
+    usecase "Alternar telas via botão" as UC14
+  }
+  
+  package "Relatórios (RF-06)" {
+    usecase "Gerar relatório PDF" as UC15
+    usecase "Filtrar por período" as UC15a
+    usecase "Filtrar por ambiente" as UC15b
+  }
+}
+
+' Relacionamentos
+ADMIN --> UC1
+ADMIN --> UC2
+ADMIN --> UC15
+
+USUARIO --> UC11
+USUARIO --> UC12
+USUARIO --> UC15
+
+SENSOR --> UC3
+SENSOR --> UC4
+SENSOR --> UC10
+SENSOR --> UC13
+SENSOR --> UC14
+
+MOBILE --> UC5
+MOBILE --> UC6
+
+' Includes
+UC1 ..> UC1a : <<include>>
+UC1 ..> UC1b : <<include>>
+UC1 ..> UC1c : <<include>>
+
+UC15 ..> UC15a : <<include>>
+UC15 ..> UC15b : <<include>>
+
+' Extends
+UC7 ..> UC8 : <<extend>>
+UC7 ..> UC9 : <<extend>>
+
+note bottom of SENSOR
+  Ponto fixo com:
+  - Microfone INMP441 (I2S)
+  - Display TFT ST7789 (SPI)
+  - Botão físico (GPIO)
+end note
+
+note bottom of MOBILE
+  App colaborativo:
+  - Medição voluntária
+  - Sem dados pessoais
+end note
+
+@enduml

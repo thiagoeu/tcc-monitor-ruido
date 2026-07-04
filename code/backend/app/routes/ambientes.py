@@ -18,7 +18,8 @@ def json_error(message, status=400):
 
 @main_bp.route("/api/ambientes", methods=["GET"])
 def http_list_ambientes():
-    return jsonify(list_ambientes())
+    apenas_ativos = request.args.get("ativo", "0") == "1"
+    return jsonify(list_ambientes(apenas_ativos=apenas_ativos))
 
 
 @main_bp.route("/api/ambientes", methods=["POST"])

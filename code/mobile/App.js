@@ -1,34 +1,48 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { View, Text, StyleSheet } from "react-native";
-import Constants from "expo-constants";
 import { useDecibelMeter } from "./src/hooks/useDecibelMeter";
 import MeterDisplay from "./src/components/MeterDisplay";
 import NoiseStatus from "./src/components/NoiseStatus";
 import MeterBar from "./src/components/MeterBar";
 import ControlButton from "./src/components/ControlButton";
 import StatsPanel from "./src/components/StatsPanel";
+import SensorSelector from "./src/components/SensorSelector";
 import { getColor, getNoiseLabel, getWidth } from "./src/shared/soundUtils";
-
-// Gera um ID único baseado no dispositivo (ou um fallback)
-const getDeviceSensorId = () => {
-  try {
-    // Tenta obter o deviceId (Android/iOS)
-    return (
-      Constants.deviceId || Constants.installationId || "soundtracker-mobile"
-    );
-  } catch {
-    return "soundtracker-mobile-default";
-  }
-};
+import { getSensores } from "./src/services/api";
 
 export default function App() {
-  const sensorId = "123";
+  const [sensores, setSensores] = useState([]);
+  const [sensorSelecionado, setSensorSelecionado] = useState(null);
+  const [loadingSensores, setLoadingSensores] = useState(true);
+
+  // Busca os ambientes ativos do backend (chamada no mount e ao abrir o seletor)
+  const carregarSensores = async () => {
+    setLoadingSensores(true);
+    const data = await getSensores();
+    setSensores(data);
+    setLoadingSensores(false);
+  };
+
+  useEffect(() => {
+    carregarSensores();
+  }, []);
+
+  const sensorId = sensorSelecionado?.sensor_id ?? null;
 
   const { db, minDb, maxDb, avgDb, isRecording, start, stop } =
     useDecibelMeter(sensorId);
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Decibelímetro</Text>
+
+      <SensorSelector
+        sensores={sensores}
+        sensorSelecionado={sensorSelecionado}
+        onSelect={setSensorSelecionado}
+        loading={loadingSensores}
+        onRefresh={carregarSensores}
+      />
 
       <MeterDisplay db={db} color={getColor(db)} />
 
@@ -40,6 +54,7 @@ export default function App() {
 
       <ControlButton
         isRecording={isRecording}
+        disabled={!sensorSelecionado}
         onPress={() => {
           if (isRecording) {
             stop();

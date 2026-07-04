@@ -91,10 +91,13 @@ def update_ambiente(ambiente_id, payload):
     return row_to_dict(row)
 
 
-def list_ambientes():
+def list_ambientes(apenas_ativos=False):
     connection = get_connection()
     cursor = connection.cursor()
-    cursor.execute("SELECT * FROM ambientes ORDER BY id ASC")
+    if apenas_ativos:
+        cursor.execute("SELECT * FROM ambientes WHERE ativo = 1 ORDER BY id ASC")
+    else:
+        cursor.execute("SELECT * FROM ambientes ORDER BY id ASC")
     rows = cursor.fetchall()
     connection.close()
     return [row_to_dict(row) for row in rows]

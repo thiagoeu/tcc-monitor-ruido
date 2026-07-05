@@ -2,6 +2,8 @@ import sqlite3
 from datetime import datetime, timedelta, timezone
 
 from ..database import get_connection, row_to_dict, utc_now_iso
+from .sessoes_service import esta_ocupado
+
 
 
 def create_ambiente(payload):
@@ -100,7 +102,13 @@ def list_ambientes(apenas_ativos=False):
         cursor.execute("SELECT * FROM ambientes ORDER BY id ASC")
     rows = cursor.fetchall()
     connection.close()
-    return [row_to_dict(row) for row in rows]
+    result = []
+    for row in rows:
+        d = row_to_dict(row)
+        d["em_uso"] = esta_ocupado(d["sensor_id"])
+        result.append(d)
+    return result
+
 
 
 def delete_ambiente(ambiente_id):

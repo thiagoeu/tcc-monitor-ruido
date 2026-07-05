@@ -9,24 +9,39 @@ import {
   ActivityIndicator,
 } from "react-native";
 
-export default function SensorSelector({ sensores, sensorSelecionado, onSelect, loading, onRefresh }) {
+export default function SensorSelector({
+  sensores,
+  sensorSelecionado,
+  onSelect,
+  loading,
+  onRefresh,
+  isRecording,
+}) {
   const [modalVisible, setModalVisible] = useState(false);
 
   const label = sensorSelecionado
     ? `${sensorSelecionado.nome} — ${sensorSelecionado.localizacao}`
     : "Selecionar local de medição";
 
+  const handleOpenSelector = () => {
+    // Bloqueia a abertura do modal enquanto a medição está ativa
+    if (isRecording) return;
+    if (onRefresh) onRefresh();
+    setModalVisible(true);
+  };
+
   return (
     <View style={styles.wrapper}>
       <Text style={styles.label}>Local de Medição</Text>
 
       <TouchableOpacity
-        style={[styles.selector, sensorSelecionado && styles.selectorActive]}
-        onPress={() => {
-          if (onRefresh) onRefresh();
-          setModalVisible(true);
-        }}
-        activeOpacity={0.75}
+        style={[
+          styles.selector,
+          sensorSelecionado && styles.selectorActive,
+          isRecording && styles.selectorLocked,
+        ]}
+        onPress={handleOpenSelector}
+        activeOpacity={isRecording ? 1 : 0.75}
       >
         {loading ? (
           <ActivityIndicator color="#7C6FF7" />
@@ -38,10 +53,20 @@ export default function SensorSelector({ sensores, sensorSelecionado, onSelect, 
             >
               {label}
             </Text>
-            <Text style={styles.chevron}>▾</Text>
+            {isRecording ? (
+              <Text style={styles.lockIcon}>🔒</Text>
+            ) : (
+              <Text style={styles.chevron}>▾</Text>
+            )}
           </>
         )}
       </TouchableOpacity>
+
+      {isRecording && (
+        <Text style={styles.lockedHint}>
+          Pare a medição para trocar o ambiente
+        </Text>
+      )}
 
       <Modal
         visible={modalVisible}
@@ -66,20 +91,43 @@ export default function SensorSelector({ sensores, sensorSelecionado, onSelect, 
                 ItemSeparatorComponent={() => <View style={styles.separator} />}
                 renderItem={({ item }) => {
                   const isSelected = sensorSelecionado?.id === item.id;
+                  // Considera o ambiente em uso SE não for o ambiente deste dispositivo
+                  const bloqueado = item.em_uso && !isSelected;
+
                   return (
                     <TouchableOpacity
-                      style={[styles.option, isSelected && styles.optionSelected]}
+                      style={[
+                        styles.option,
+                        isSelected && styles.optionSelected,
+                        bloqueado && styles.optionBloqueado,
+                      ]}
                       onPress={() => {
+                        if (bloqueado) return;
                         onSelect(item);
                         setModalVisible(false);
                       }}
-                      activeOpacity={0.7}
+                      activeOpacity={bloqueado ? 1 : 0.7}
                     >
                       <View style={styles.optionInfo}>
-                        <Text style={[styles.optionName, isSelected && styles.optionNameSelected]}>
+                        <Text
+                          style={[
+                            styles.optionName,
+                            isSelected && styles.optionNameSelected,
+                            bloqueado && styles.optionNameBloqueado,
+                          ]}
+                        >
                           {item.nome}
+                          {bloqueado && "  🔒"}
                         </Text>
-                        <Text style={styles.optionSub}>{item.localizacao}</Text>
+                        <Text
+                          style={[
+                            styles.optionSub,
+                            bloqueado && styles.optionSubBloqueado,
+                          ]}
+                        >
+                          {item.localizacao}
+                          {bloqueado && " · Em uso por outro dispositivo"}
+                        </Text>
                       </View>
                       {isSelected && <Text style={styles.checkmark}>✓</Text>}
                     </TouchableOpacity>
@@ -122,6 +170,10 @@ const styles = StyleSheet.create({
   selectorActive: {
     borderColor: "#7C6FF7",
   },
+  selectorLocked: {
+    borderColor: "#4B3F6B",
+    opacity: 0.75,
+  },
   selectorText: {
     color: "#FFFFFF",
     fontSize: 15,
@@ -135,6 +187,17 @@ const styles = StyleSheet.create({
     color: "#7C6FF7",
     fontSize: 18,
     marginLeft: 8,
+  },
+  lockIcon: {
+    fontSize: 16,
+    marginLeft: 8,
+  },
+  lockedHint: {
+    color: "#6B7280",
+    fontSize: 11,
+    marginTop: 6,
+    textAlign: "center",
+    fontStyle: "italic",
   },
   overlay: {
     flex: 1,
@@ -177,6 +240,9 @@ const styles = StyleSheet.create({
   optionSelected: {
     backgroundColor: "rgba(124, 111, 247, 0.12)",
   },
+  optionBloqueado: {
+    opacity: 0.45,
+  },
   optionInfo: {
     flex: 1,
   },
@@ -188,10 +254,17 @@ const styles = StyleSheet.create({
   optionNameSelected: {
     color: "#7C6FF7",
   },
+  optionNameBloqueado: {
+    color: "#6B7280",
+  },
   optionSub: {
     color: "#6B7280",
     fontSize: 13,
     marginTop: 2,
+  },
+  optionSubBloqueado: {
+    color: "#4B5563",
+    fontSize: 12,
   },
   checkmark: {
     color: "#7C6FF7",

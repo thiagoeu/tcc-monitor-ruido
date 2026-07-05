@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, Alert } from "react-native";
 import { useDecibelMeter } from "./src/hooks/useDecibelMeter";
 import MeterDisplay from "./src/components/MeterDisplay";
 import NoiseStatus from "./src/components/NoiseStatus";
@@ -29,8 +29,21 @@ export default function App() {
 
   const sensorId = sensorSelecionado?.sensor_id ?? null;
 
-  const { db, minDb, maxDb, avgDb, isRecording, start, stop } =
+  const { db, minDb, maxDb, avgDb, isRecording, start, stop, ocupacaoError } =
     useDecibelMeter(sensorId);
+
+  // Exibe alerta quando o ambiente já está em uso por outro dispositivo
+  useEffect(() => {
+    if (ocupacaoError) {
+      Alert.alert(
+        "Ambiente Ocupado 🔒",
+        "Este ambiente já está sendo monitorado por outro dispositivo. Selecione outro local de medição.",
+        [{ text: "OK" }]
+      );
+      // Recarrega a lista para mostrar o status atualizado
+      carregarSensores();
+    }
+  }, [ocupacaoError]);
 
   return (
     <View style={styles.container}>
@@ -42,6 +55,7 @@ export default function App() {
         onSelect={setSensorSelecionado}
         loading={loadingSensores}
         onRefresh={carregarSensores}
+        isRecording={isRecording}
       />
 
       <MeterDisplay db={db} color={getColor(db)} />

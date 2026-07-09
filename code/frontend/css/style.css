@@ -133,6 +133,11 @@ canvas {
   color: var(--warn);
 }
 
+.muted-tag {
+  background: rgba(168, 178, 192, 0.16);
+  color: #a8b2c0;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -285,7 +290,7 @@ label {
 }
 
 .sidebar {
-  width: 200px;
+  width: 240px;
   background: #0f1217;
   border-right: 1px solid var(--line);
   padding: 16px 0;
@@ -298,15 +303,23 @@ label {
 }
 
 .sidebar-header {
-  padding: 0 16px;
+  padding: 0 8px;
   margin-bottom: 20px;
   border-bottom: 1px solid var(--line);
   padding-bottom: 12px;
 }
 
-.sidebar-header h2 {
-  margin: 0;
-  font-size: 1rem;
+.brand {
+  display: block;
+  width: 100%;
+  padding: 10px 8px 0;
+}
+
+.brand-logo {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  display: block;
 }
 
 .sidebar-menu {

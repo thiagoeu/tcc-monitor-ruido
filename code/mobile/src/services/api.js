@@ -4,7 +4,9 @@ const API_BASE_URL = Constants.expoConfig?.extra?.apiBaseUrl; // substitua pelo 
 
 export async function getSensores() {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/ambientes?ativo=1`);
+    const response = await fetch(`${API_BASE_URL}/api/ambientes?ativo=1`, {
+      headers: { "bypass-tunnel-reminder": "true" },
+    });
     const data = await response.json();
     if (!response.ok) throw new Error(data.erro || "Erro ao buscar sensores");
     return data; // array de { id, nome, localizacao, sensor_id, limite_db, em_uso, ... }
@@ -19,7 +21,10 @@ export async function enviarMedicao(sensorId, db) {
     const roundedDb = parseFloat(db.toFixed(2));
     const response = await fetch(`${API_BASE_URL}/api/medicoes`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "bypass-tunnel-reminder": "true",
+      },
       body: JSON.stringify({
         sensor_id: sensorId,
         db: roundedDb,
@@ -42,7 +47,10 @@ export async function enviarMedicao(sensorId, db) {
 export async function ocuparAmbiente(sensorId, deviceId) {
   const response = await fetch(`${API_BASE_URL}/api/sessoes`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "bypass-tunnel-reminder": "true",
+    },
     body: JSON.stringify({ sensor_id: sensorId, device_id: deviceId }),
   });
   const data = await response.json();
@@ -57,7 +65,10 @@ export async function liberarAmbiente(sensorId, deviceId) {
   try {
     await fetch(`${API_BASE_URL}/api/sessoes/${encodeURIComponent(sensorId)}`, {
       method: "DELETE",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "bypass-tunnel-reminder": "true",
+      },
       body: JSON.stringify({ device_id: deviceId }),
     });
   } catch (error) {
@@ -74,7 +85,10 @@ export async function heartbeatSessao(sensorId, deviceId) {
       `${API_BASE_URL}/api/sessoes/${encodeURIComponent(sensorId)}/heartbeat`,
       {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "bypass-tunnel-reminder": "true",
+        },
         body: JSON.stringify({ device_id: deviceId }),
       }
     );

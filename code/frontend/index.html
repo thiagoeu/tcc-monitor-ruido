@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dashboard de Ruído - Raspberry Pi 3 B+</title>
+    <title>NoiseRadar - Dashboard</title>
     <link rel="stylesheet" href="/css/style.css" />
   </head>
   <body>
@@ -11,7 +11,9 @@
       <!-- Sidebar -->
       <nav class="sidebar">
         <div class="sidebar-header">
-          <h2>Menu</h2>
+          <div class="brand">
+            <img src="/asserts/logo_do_tcc_transparente.png" alt="NoiseRadar" class="brand-logo" />
+          </div>
         </div>
         <ul class="sidebar-menu">
           <li><a href="/" class="sidebar-link active">📊 Dashboard</a></li>
@@ -26,7 +28,7 @@
       <div class="main-content">
         <div class="container">
           <div class="header">
-            <h1>Dashboard de Monitoramento de Ruído</h1>
+            <h1>NoiseRadar - Dashboard</h1>
             <p id="status">Carregando dados...</p>
           </div>
 
@@ -71,7 +73,7 @@
             </div>
           </details>
 
-          <details class="accordion" open>
+          <details class="accordion" style="display: none;">
             <summary>Sensores físicos conectados (UART)</summary>
             <div class="section-content">
               <p class="small helper-text">

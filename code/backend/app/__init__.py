@@ -1,6 +1,6 @@
 from pathlib import Path
 from flask import Flask, send_from_directory
-from .database import init_db, seed_default_environments
+from .database import init_db
 from .routes import main_bp
 
 
@@ -36,6 +36,5 @@ def create_app():
 
     with app.app_context():
         init_db()
-        seed_default_environments()
 
     return app

@@ -118,20 +118,46 @@ async function loadSensoresFisicos() {
   }
 }
 
-function renderAmbientes(ambientes, ultimaPorAmbiente) {
+function renderAmbientes(ambientes, ultimaPorAmbiente, servidorEm) {
   const container = document.getElementById("ambientes");
   if (!ambientes.length) {
     container.innerHTML = '<div class="card">Nenhum ambiente cadastrado.</div>';
     return;
   }
+  
+  const referenceTime = servidorEm ? new Date(servidorEm).getTime() : new Date().getTime();
+
   container.innerHTML = ambientes
     .map((ambiente) => {
       const ultima =
         ultimaPorAmbiente[String(ambiente.id)] ||
         ultimaPorAmbiente[ambiente.id];
-      const db = ultima ? formatDb(ultima.db) : "-";
-      const excedeu = ultima ? Boolean(ultima.excedeu_limite) : false;
-      const horario = ultima ? toLocalDate(ultima.created_at) : "Sem medições";
+      
+      const hasActiveSession = Boolean(ambiente.em_uso);
+      let hasRecentMeasurement = false;
+      if (ultima && ultima.created_at) {
+        const lastTime = new Date(ultima.created_at).getTime();
+        // If last measurement is within 20 seconds of referenceTime
+        if (Math.abs(referenceTime - lastTime) < 20000) {
+          hasRecentMeasurement = true;
+        }
+      }
+      
+      const emUso = hasActiveSession || hasRecentMeasurement;
+      const db = (ultima && emUso) ? formatDb(ultima.db) : "-";
+      const excedeu = (ultima && emUso) ? Boolean(ultima.excedeu_limite) : false;
+      
+      let statusHtml = '';
+      let horario = '';
+      
+      if (emUso) {
+        statusHtml = statusTag(excedeu);
+        horario = ultima ? toLocalDate(ultima.created_at) : "Sem medições";
+      } else {
+        statusHtml = '<span class="tag muted-tag">Sem medições</span>';
+        horario = "Sem medições";
+      }
+
       return `
       <div class="card">
         <div class="card-head">
@@ -142,7 +168,7 @@ function renderAmbientes(ambientes, ultimaPorAmbiente) {
         <div>Sensor: ${ambiente.sensor_id}</div>
         <div>Limite: ${formatDb(ambiente.limite_db)} dB</div>
         <div>Último valor: <strong>${db} dB</strong></div>
-        <div style="margin-top:6px">${ultima ? statusTag(excedeu) : '<span class="tag ok">Sem leitura</span>'}</div>
+        <div style="margin-top:6px">${statusHtml}</div>
         <div class="small" style="margin-top:8px;color:var(--muted)">${horario}</div>
       </div>
     `;
@@ -257,10 +283,33 @@ async function loadDashboard() {
   try {
     const data = await fetchMonitoramento(80);
     const ambientes = data.ambientes || [];
-    renderAmbientes(ambientes, data.ultima_por_ambiente || {});
+    renderAmbientes(ambientes, data.ultima_por_ambiente || {}, data.servidor_em);
     renderMedicoes(data.medicoes || []);
     renderAlertas(data.alertas || []);
-    drawTrendChart(data.medicoes || []);
+
+    // Filter measurements to only include active/in-use sensors
+    const referenceTime = data.servidor_em ? new Date(data.servidor_em).getTime() : new Date().getTime();
+    const activeSensorIds = new Set(
+      ambientes
+        .filter((a) => {
+          const hasActiveSession = Boolean(a.em_uso);
+          const ultima = (data.ultima_por_ambiente || {})[String(a.id)] || (data.ultima_por_ambiente || {})[a.id];
+          let hasRecentMeasurement = false;
+          if (ultima && ultima.created_at) {
+            const lastTime = new Date(ultima.created_at).getTime();
+            if (Math.abs(referenceTime - lastTime) < 20000) {
+              hasRecentMeasurement = true;
+            }
+          }
+          return hasActiveSession || hasRecentMeasurement;
+        })
+        .map((a) => a.sensor_id)
+    );
+    const activeMedicoes = (data.medicoes || []).filter((med) =>
+      activeSensorIds.has(med.sensor_id)
+    );
+    drawTrendChart(activeMedicoes);
+
     document.getElementById("status").textContent =
       `Online • Atualizado em ${new Date().toLocaleString("pt-BR")}`;
   } catch (error) {

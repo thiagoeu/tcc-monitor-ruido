@@ -133,11 +133,7 @@ const { db, isRecording, minDb, maxDb, avgDb, start, stop } =
 2. Instale as dependências
    npm install
 
-3. Configure as variáveis de ambiente
-
-   # Crie um arquivo .env na raiz do projeto
-
-   API_BASE_URL=http://seu-servidor:5000/api
+   API_BASE_URL=http://seu-servidor:5000
 
 4. Execute o projeto
    `npx expo start`

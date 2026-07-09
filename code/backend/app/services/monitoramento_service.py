@@ -6,6 +6,7 @@ from ..database import (
     row_to_dict,
     utc_now_iso,
 )
+from .sessoes_service import esta_ocupado
 
 SERIAL_SCAN_AVAILABLE = False
 try:
@@ -25,7 +26,11 @@ def get_monitoramento(limit):
     cursor = connection.cursor()
 
     cursor.execute("SELECT * FROM ambientes ORDER BY id ASC")
-    ambientes = [row_to_dict(row) for row in cursor.fetchall()]
+    ambientes = []
+    for row in cursor.fetchall():
+        d = row_to_dict(row)
+        d["em_uso"] = esta_ocupado(d["sensor_id"])
+        ambientes.append(d)
 
     cursor.execute(
         """

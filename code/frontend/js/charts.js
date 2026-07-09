@@ -21,38 +21,132 @@ export function drawTrendChart(medicoes) {
     return;
   }
   const ctx = canvas.getContext("2d");
-  const width = canvas.width;
-  const height = canvas.height;
-  const padding = 24;
+  
+  // Set sharp resolution
+  const width = canvas.clientWidth || canvas.width || 300;
+  const height = canvas.clientHeight || canvas.height || 170;
+  canvas.width = width;
+  canvas.height = height;
   ctx.clearRect(0, 0, width, height);
-  const points = [...medicoes].reverse().slice(-25);
-  const values = points.map((item) => Number(item.db || 0));
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const range = Math.max(1, max - min);
-  ctx.strokeStyle = "#2a3444";
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(padding, height - padding);
-  ctx.lineTo(width - padding, height - padding);
-  ctx.stroke();
-  ctx.beginPath();
-  points.forEach((point, index) => {
-    const x =
-      padding +
-      (index * (width - padding * 2)) / Math.max(points.length - 1, 1);
-    const normalized = (Number(point.db) - min) / range;
-    const y = height - padding - normalized * (height - padding * 2);
-    if (index === 0) ctx.moveTo(x, y);
-    else ctx.lineTo(x, y);
+
+  // Group measurements by environment (last 60 readings)
+  const recentMedicoes = [...medicoes].reverse().slice(-60);
+  const groups = {};
+  recentMedicoes.forEach((med) => {
+    const key = med.ambiente_id || med.sensor_id;
+    if (!groups[key]) {
+      groups[key] = {
+        id: key,
+        sensor_id: med.sensor_id,
+        ambiente_nome: med.ambiente_nome || med.sensor_id,
+        medicoes: [],
+      };
+    }
+    groups[key].medicoes.push(med);
   });
-  ctx.strokeStyle = "#5de08a";
-  ctx.lineWidth = 2;
-  ctx.stroke();
-  const last = points[points.length - 1];
-  ctx.fillStyle = "#a8b2c0";
-  ctx.font = "12px Arial";
-  ctx.fillText(`Último: ${formatDb(last.db)} dB`, 10, 14);
+
+  const activeGroups = Object.values(groups);
+  if (!activeGroups.length) {
+    drawEmptyChart(canvas, "Sem medições para exibir.");
+    return;
+  }
+
+  // Color palette for different sensors
+  const palette = ["#5de08a", "#60a5fa", "#fbbf24", "#a78bfa", "#f87171", "#22d3ee", "#e879f9"];
+  activeGroups.forEach((group, index) => {
+    group.color = palette[index % palette.length];
+  });
+
+  // Scale Y-axis
+  const allValues = recentMedicoes.map((m) => Number(m.db || 0));
+  const minDb = Math.max(30, Math.min(...allValues) - 2);
+  const maxDb = Math.max(minDb + 10, Math.max(...allValues) + 2);
+  const range = maxDb - minDb;
+
+  const paddingLeft = 45;
+  const paddingRight = 15;
+  const paddingTop = 35;
+  const paddingBottom = 20;
+
+  const graphWidth = width - paddingLeft - paddingRight;
+  const graphHeight = height - paddingTop - paddingBottom;
+
+  // Background
+  ctx.fillStyle = "#0f1217";
+  ctx.fillRect(0, 0, width, height);
+
+  // Horizontal grid lines & Y labels
+  ctx.strokeStyle = "#1f2937";
+  ctx.lineWidth = 1;
+  ctx.fillStyle = "#9ca3af";
+  ctx.font = "10px sans-serif";
+  ctx.textAlign = "right";
+  ctx.textBaseline = "middle";
+
+  const gridLines = 4;
+  for (let i = 0; i <= gridLines; i++) {
+    const y = paddingTop + (i / gridLines) * graphHeight;
+    const val = maxDb - (i / gridLines) * range;
+    
+    ctx.beginPath();
+    ctx.moveTo(paddingLeft, y);
+    ctx.lineTo(width - paddingRight, y);
+    ctx.stroke();
+
+    ctx.fillText(`${Math.round(val)} dB`, paddingLeft - 8, y);
+  }
+
+  // Draw lines & dots
+  activeGroups.forEach((group) => {
+    const groupMeds = group.medicoes;
+    if (!groupMeds.length) return;
+
+    ctx.strokeStyle = group.color;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+
+    groupMeds.forEach((med, index) => {
+      const x = paddingLeft + (index / Math.max(1, groupMeds.length - 1)) * graphWidth;
+      const y = paddingTop + graphHeight - ((Number(med.db) - minDb) / range) * graphHeight;
+
+      if (index === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    // Dots
+    ctx.fillStyle = group.color;
+    groupMeds.forEach((med, index) => {
+      const x = paddingLeft + (index / Math.max(1, groupMeds.length - 1)) * graphWidth;
+      const y = paddingTop + graphHeight - ((Number(med.db) - minDb) / range) * graphHeight;
+      ctx.beginPath();
+      ctx.arc(x, y, 3, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  });
+
+  // Draw legend
+  ctx.textAlign = "left";
+  ctx.textBaseline = "top";
+  ctx.font = "11px sans-serif";
+
+  let legendX = paddingLeft;
+  const legendY = 8;
+
+  activeGroups.forEach((group) => {
+    const label = `${group.ambiente_nome} (${group.sensor_id})`;
+    const textWidth = ctx.measureText(label).width;
+
+    ctx.fillStyle = group.color;
+    ctx.beginPath();
+    ctx.arc(legendX + 5, legendY + 6, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#e5e7eb";
+    ctx.fillText(label, legendX + 14, legendY);
+
+    legendX += textWidth + 24;
+  });
 }
 
 export function drawAlertRateChart(report) {
@@ -95,8 +189,13 @@ export function drawDetailedChart(canvasId, medicoes, limiteDb) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
   const ctx = canvas.getContext("2d");
-  const width = canvas.width;
-  const height = canvas.height;
+  
+  // Set sharp resolution
+  const width = canvas.clientWidth || canvas.width || 400;
+  const height = canvas.clientHeight || canvas.height || 200;
+  canvas.width = width;
+  canvas.height = height;
+
   const padding = 40;
   const valores = medicoes.map((m) => m.db);
   const minDb = Math.min(...valores);

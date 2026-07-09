@@ -47,6 +47,15 @@ def fetch_ambientes_from_api(api_base_url, timeout=4):
             if not sensor_id:
                 continue
             
+            # Retirar as salas padrão (e06a-001 e e06a-002) do mock
+            if sensor_id in ("e06a-001", "e06a-002"):
+                continue
+
+            # Ignora ambientes que estão sendo utilizados ativamente (em_uso = True)
+            if amb.get("em_uso"):
+                print(f"[Mock] Ignorando sensor '{sensor_id}' pois está em uso ativo.")
+                continue
+            
             # Use limite_db como referência, com faixa padrão
             limite = amb.get("limite_db", 65)
             min_db = max(30, limite - 20)  # 20 dB abaixo do limite
@@ -149,7 +158,7 @@ def build_parser():
     )
     parser.add_argument(
         "--sensors",
-        default="e06a-001:45:80,e06a-002:35:75",
+        default="",
         help="(Obsoleto) Lista de sensores no formato sensor:min:max separados por vírgula",
     )
     parser.add_argument(
@@ -169,5 +178,8 @@ if __name__ == "__main__":
         run(args.api_url, sensors=None, interval_seconds=max(args.interval, 1.0), dynamic=True)
     else:
         # Modo legado: usa sensores configurados
+        if not args.sensors:
+            print("[Aviso] Nenhum sensor configurado via --sensors. Use --dynamic para buscar do backend.")
+            exit(0)
         configured_sensors = parse_sensors(args.sensors)
         run(args.api_url, sensors=configured_sensors, interval_seconds=max(args.interval, 1.0), dynamic=False)

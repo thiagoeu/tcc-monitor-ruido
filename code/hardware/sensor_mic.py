@@ -19,7 +19,7 @@ def send_measurement(api_url, sensor_id, db_value, timeout=4):
     except Exception as error:
         print(f"[{sensor_id}] Falha ao enviar para {api_url}: {error}")
 
-def run(api_url, sensor_id, device="hw:1,0", interval_seconds=0.5, calibration_offset=0.0):
+def run(api_url, sensor_id, device="hw:1,0", interval_seconds=5.0, calibration_offset=0.0):
     """
     Inicia a escuta do microfone usando 'arecord' (via subprocess).
     """
@@ -101,8 +101,8 @@ def build_parser():
     parser.add_argument(
         "--interval",
         type=float,
-        default=0.5,
-        help="Intervalo de cálculo/envio em segundos (ex: 0.5 = 2 vezes/s)",
+        default=5.0,
+        help="Intervalo de cálculo/envio em segundos (ex: 5.0 = a cada 5s)",
     )
     parser.add_argument(
         "--device",

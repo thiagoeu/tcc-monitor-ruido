@@ -19,7 +19,7 @@ def send_measurement(api_url, sensor_id, db_value, timeout=4):
     except Exception as error:
         print(f"[{sensor_id}] Falha ao enviar para {api_url}: {error}")
 
-def run(api_url, sensor_id, device="hw:1,0", interval_seconds=0.5):
+def run(api_url, sensor_id, device="hw:1,0", interval_seconds=0.5, calibration_offset=0.0):
     """
     Inicia a escuta do microfone usando 'arecord' (via subprocess).
     """
@@ -69,8 +69,10 @@ def run(api_url, sensor_id, device="hw:1,0", interval_seconds=0.5):
                 # 2147483647.0 é o valor máximo positivo para um inteiro de 32 bits assinado (S32_LE)
                 db_fs = 20 * math.log10(rms / 2147483647.0)
 
-            # Converte dBFS (-100 ~ 0) para dB SPL positivo aproximado (0 ~ 100)
-            db_spl = max(0.0, min(100.0, db_fs + 100.0))
+            # Converte dBFS (-100 ~ 0) para dB SPL aproximado e aplica a calibração
+            db_spl = db_fs + 100.0 + calibration_offset
+            # Limita a leitura a valores positivos (aumentamos o limite máximo para 130dB)
+            db_spl = max(0.0, min(130.0, db_spl))
             
             # Envia para a API
             send_measurement(api_url, sensor_id, round(db_spl, 2))
@@ -107,6 +109,12 @@ def build_parser():
         default="hw:1,0",
         help="Dispositivo ALSA para o arecord (padrão: hw:1,0)",
     )
+    parser.add_argument(
+        "--calibration-offset",
+        type=float,
+        default=0.0,
+        help="Valor em dB para calibrar a leitura (ex: 15.0)",
+    )
     return parser
 
 if __name__ == "__main__":
@@ -117,5 +125,6 @@ if __name__ == "__main__":
         api_url=args.api_url,
         sensor_id=args.sensor,
         device=args.device,
-        interval_seconds=max(args.interval, 0.1)
+        interval_seconds=max(args.interval, 0.1),
+        calibration_offset=args.calibration_offset
     )

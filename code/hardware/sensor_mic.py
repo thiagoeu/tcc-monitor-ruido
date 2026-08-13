@@ -26,12 +26,15 @@ def run(api_url, sensor_id, device="hw:1,0", interval_seconds=5.0, calibration_o
     RATE = 48000
     CHANNELS = 2
     
-    # Define o tamanho do bloco de áudio lido com base no intervalo desejado
-    # Ex: 0.5s = RATE // 2, 2.0s = RATE * 2
-    BLOCK = int(RATE * interval_seconds)
+    # Lemos 2 vezes por segundo (0.5s)
+    READ_INTERVAL = 0.5
+    BLOCK = int(RATE * READ_INTERVAL)
 
     print(f"Iniciando captura com arecord ({device}) para o sensor '{sensor_id}'...")
-    print(f"Intervalo de envio: {interval_seconds}s")
+    print(f"Intervalo de leitura: {READ_INTERVAL}s | Intervalo de envio: {interval_seconds}s")
+
+    last_send_time = time.time()
+    max_db_spl = 0.0
 
     proc = subprocess.Popen(
         [
@@ -73,9 +76,21 @@ def run(api_url, sensor_id, device="hw:1,0", interval_seconds=5.0, calibration_o
             db_spl = db_fs + 100.0 + calibration_offset
             # Limita a leitura a valores positivos (aumentamos o limite máximo para 130dB)
             db_spl = max(0.0, min(130.0, db_spl))
+            # Mostra no terminal a cada 0.5s
+            print(f"[{sensor_id}] Leitura atual: {db_spl:.1f} dB")
+
+            # Atualiza o pico de ruído do período
+            if db_spl > max_db_spl:
+                max_db_spl = db_spl
             
-            # Envia para a API
-            send_measurement(api_url, sensor_id, round(db_spl, 2))
+            # Envia para a API apenas a cada interval_seconds (ex: 5s)
+            current_time = time.time()
+            if current_time - last_send_time >= interval_seconds:
+                # Opcional: imprimir um aviso no terminal que está enviando
+                print(f"[{sensor_id}] ---> Enviando pico de {max_db_spl:.1f} dB para a API <---")
+                send_measurement(api_url, sensor_id, round(max_db_spl, 2))
+                last_send_time = current_time
+                max_db_spl = 0.0
 
     except KeyboardInterrupt:
         print("\nCaptura encerrada pelo usuário.")

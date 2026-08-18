@@ -4,7 +4,7 @@ from .database import init_db
 from .routes import main_bp
 
 
-def create_app():
+def create_app(config_overrides=None):
     base_dir = Path(__file__).resolve().parent.parent   # backend/
     project_dir = base_dir.parent                       # code/
     frontend_dir = project_dir / "frontend"             # code/frontend/
@@ -19,6 +19,9 @@ def create_app():
         "DB_PATH": str(db_path),
         "FRONTEND_DIR": str(frontend_dir),
     })
+
+    if config_overrides:
+        app.config.update(config_overrides)
 
     @app.after_request
     def add_cors_headers(response):

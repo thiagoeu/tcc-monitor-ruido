@@ -7,4 +7,5 @@ from . import health
 from . import ambientes
 from . import medicoes
 from . import relatorios
-from . import sessoes
+from . import sessoes
+from . import auth

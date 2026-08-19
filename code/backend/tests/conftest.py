@@ -14,7 +14,7 @@ def app(tmp_path):
 
 
 @pytest.fixture()
-def client(app):
+def client_raw(app):
     return app.test_client()
 
 
@@ -25,6 +25,52 @@ def limpar_sessoes():
     sessoes_service._sessoes.clear()
     yield
     sessoes_service._sessoes.clear()
+
+
+class _AuthedClient:
+    """Wrapper que injeta o header Authorization do token em toda chamada."""
+
+    def __init__(self, client, token):
+        self._client = client
+        self._headers = {"Authorization": f"Bearer {token}"}
+
+    def _kwargs(self, kwargs):
+        kwargs = dict(kwargs)
+        headers = dict(self._headers)
+        headers.update(kwargs.pop("headers", {}))
+        kwargs["headers"] = headers
+        return kwargs
+
+    def get(self, *args, **kwargs):
+        return self._client.get(*args, **self._kwargs(kwargs))
+
+    def post(self, *args, **kwargs):
+        return self._client.post(*args, **self._kwargs(kwargs))
+
+    def put(self, *args, **kwargs):
+        return self._client.put(*args, **self._kwargs(kwargs))
+
+    def delete(self, *args, **kwargs):
+        return self._client.delete(*args, **self._kwargs(kwargs))
+
+    def patch(self, *args, **kwargs):
+        return self._client.patch(*args, **self._kwargs(kwargs))
+
+
+@pytest.fixture()
+def auth_token(client_raw):
+    response = client_raw.post("/api/auth/login", json={
+        "email": "admin@noiseradar.local",
+        "senha": "admin123",
+    })
+    assert response.status_code == 200
+    return response.get_json()["token"]
+
+
+@pytest.fixture()
+def client(client_raw, auth_token):
+    """Client autenticado como admin (token injetado automaticamente)."""
+    return _AuthedClient(client_raw, auth_token)
 
 
 @pytest.fixture()

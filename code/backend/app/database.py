@@ -1,7 +1,9 @@
+import os
 import sqlite3
 from datetime import datetime, timezone
 
 from flask import current_app
+from werkzeug.security import generate_password_hash
 
 
 def utc_now_iso():
@@ -61,6 +63,48 @@ def init_db():
             FOREIGN KEY (medicao_id) REFERENCES medicoes(id)
         )
         """
+    )
+
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS usuarios (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nome TEXT NOT NULL,
+            email TEXT NOT NULL UNIQUE,
+            senha_hash TEXT NOT NULL,
+            papel TEXT NOT NULL DEFAULT 'visualizador',
+            ativo INTEGER NOT NULL DEFAULT 1,
+            token TEXT,
+            token_expira TEXT,
+            created_at TEXT NOT NULL,
+            last_login_at TEXT
+        )
+        """
+    )
+
+    connection.commit()
+    connection.close()
+
+
+def seed_default_admin():
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    email = os.getenv("ADMIN_EMAIL", "admin@noiseradar.local")
+    senha = os.getenv("ADMIN_SENHA", "admin123")
+    nome = os.getenv("ADMIN_NOME", "Administrador")
+
+    cursor.execute("SELECT id FROM usuarios WHERE email = ?", (email,))
+    if cursor.fetchone():
+        connection.close()
+        return
+
+    cursor.execute(
+        """
+        INSERT INTO usuarios (nome, email, senha_hash, papel, ativo, created_at)
+        VALUES (?, ?, ?, 'admin', 1, ?)
+        """,
+        (nome, email, generate_password_hash(senha), utc_now_iso()),
     )
 
     connection.commit()

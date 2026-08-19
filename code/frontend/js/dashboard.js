@@ -1,4 +1,5 @@
 // dashboard.js - lógica da página inicial (index.html)
+import { logout, requireAuth } from "./auth.js";
 import {
   fetchMonitoramento,
   fetchSensoresFisicos,
@@ -380,6 +381,12 @@ function initSensorScanControls() {
 }
 
 function bootstrap() {
+  if (!requireAuth()) return;
+
+  document
+    .getElementById("logoutBtn")
+    .addEventListener("click", () => logout());
+
   document
     .getElementById("ambienteForm")
     .addEventListener("submit", submitAmbiente);

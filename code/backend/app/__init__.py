@@ -1,6 +1,7 @@
+import os
 from pathlib import Path
 from flask import Flask, send_from_directory
-from .database import init_db
+from .database import init_db, seed_default_admin
 from .routes import main_bp
 
 
@@ -18,6 +19,7 @@ def create_app(config_overrides=None):
     app.config.update({
         "DB_PATH": str(db_path),
         "FRONTEND_DIR": str(frontend_dir),
+        "TOKEN_TTL_HORAS": int(os.getenv("APP_TOKEN_TTL_HORAS", "168")),
     })
 
     if config_overrides:
@@ -39,5 +41,6 @@ def create_app(config_overrides=None):
 
     with app.app_context():
         init_db()
+        seed_default_admin()
 
     return app

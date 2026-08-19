@@ -7,6 +7,7 @@ from app.services import (
 )
 
 from . import main_bp
+from .auth import login_required
 
 
 def parse_int(value, default, min_value, max_value):
@@ -20,6 +21,7 @@ def parse_int(value, default, min_value, max_value):
 
 
 @main_bp.route("/api/relatorios/resumo", methods=["GET"])
+@login_required
 def http_relatorio_resumo():
     hours = parse_int(
         request.args.get("hours", 24),
@@ -32,6 +34,7 @@ def http_relatorio_resumo():
 
 
 @main_bp.route("/api/relatorios/txt", methods=["GET"])
+@login_required
 def http_relatorio_txt():
     hours = parse_int(
         request.args.get("hours", 24),

@@ -1,6 +1,11 @@
 import { fetchAmbientes, fetchMonitoramento } from "./api.js";
 import { formatDb } from "./utils.js";
 import { drawDetailedChart } from "./charts.js";
+import { logout, requireAuth } from "./auth.js";
+
+if (!requireAuth()) {
+  // sem sessão — já foi redirecionado para /login.html
+}
 
 async function loadGraficos() {
   try {
@@ -106,5 +111,10 @@ function updateGraficoStats(statsId, medicoes) {
   `;
 }
 
-document.addEventListener("DOMContentLoaded", loadGraficos);
+document.addEventListener("DOMContentLoaded", () => {
+  document
+    .getElementById("logoutBtn")
+    ?.addEventListener("click", () => logout());
+  loadGraficos();
+});
 setInterval(loadGraficos, 10000);

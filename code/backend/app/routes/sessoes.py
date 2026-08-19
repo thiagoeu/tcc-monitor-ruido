@@ -3,6 +3,7 @@ from flask import jsonify, request
 from app.services import ocupar_ambiente, liberar_ambiente, heartbeat_sessao, listar_sessoes
 
 from . import main_bp
+from .auth import login_required
 
 
 def json_error(message, status=400):
@@ -12,6 +13,7 @@ def json_error(message, status=400):
 
 
 @main_bp.route("/api/sessoes", methods=["GET"])
+@login_required
 def http_listar_sessoes():
     """Lista todas as sessões ativas (útil para debug/admin)."""
     return jsonify(listar_sessoes())

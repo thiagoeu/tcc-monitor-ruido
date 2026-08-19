@@ -8,6 +8,7 @@ from app.services import (
 )
 
 from . import main_bp
+from .auth import login_required
 
 
 def json_error(message, status=400):
@@ -23,6 +24,7 @@ def http_list_ambientes():
 
 
 @main_bp.route("/api/ambientes", methods=["POST"])
+@login_required
 def http_create_ambiente():
     payload = request.get_json(silent=True) or {}
 
@@ -42,6 +44,7 @@ def http_create_ambiente():
 
 
 @main_bp.route("/api/ambientes/<int:ambiente_id>", methods=["PUT"])
+@login_required
 def http_update_ambiente(ambiente_id):
     payload = request.get_json(silent=True) or {}
 
@@ -61,6 +64,7 @@ def http_update_ambiente(ambiente_id):
 
 
 @main_bp.route("/api/ambientes/<int:ambiente_id>", methods=["DELETE"])
+@login_required
 def http_delete_ambiente(ambiente_id):
     deleted = delete_ambiente(ambiente_id)
 

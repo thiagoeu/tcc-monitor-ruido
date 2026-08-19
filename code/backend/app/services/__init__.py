@@ -9,3 +9,10 @@ from .sessoes_service import (
     esta_ocupado,
     listar_sessoes,
 )
+from .auth_service import (
+    autenticar_por_token,
+    create_usuario,
+    list_usuarios,
+    login,
+    logout,
+)

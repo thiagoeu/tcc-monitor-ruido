@@ -1,20 +1,17 @@
 // login.js - lógica da página de login
 import { login, redirectIfAuthenticated } from "./auth.js";
+import { showToast } from "./toast.js";
 
 if (redirectIfAuthenticated()) {
   // já autenticado — a função redirecionou para o dashboard
 }
 
 const form = document.getElementById("loginForm");
-const message = document.getElementById("loginMessage");
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   const email = form.email.value.trim();
   const senha = form.senha.value;
-
-  message.textContent = "";
-  message.style.color = "";
 
   const button = form.querySelector("button[type=submit]");
   button.disabled = true;
@@ -22,9 +19,13 @@ form.addEventListener("submit", async (event) => {
 
   try {
     await login(email, senha);
+    showToast("Login realizado com sucesso.", "success");
     window.location.href = "/";
   } catch (error) {
-    message.textContent = error.message;
+    if (error instanceof TypeError) {
+      showToast("Falha de rede ao contactar o servidor.");
+    }
+    // erros da API já são exibidos via toast em auth.login()
   } finally {
     button.disabled = false;
     button.textContent = "Entrar";

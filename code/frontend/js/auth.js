@@ -1,4 +1,5 @@
 // auth.js - gerenciamento de autenticação no cliente
+import { showToast } from "./toast.js";
 
 const TOKEN_KEY = "noiseradar_token";
 
@@ -31,7 +32,9 @@ export async function login(email, senha) {
   });
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new Error(body.erro || "Falha no login");
+    const error = new Error(body.erro || "Falha no login");
+    showToast(error.message);
+    throw error;
   }
   setToken(body.token);
   return body.usuario;

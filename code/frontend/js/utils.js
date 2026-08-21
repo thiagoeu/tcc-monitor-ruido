@@ -1,4 +1,6 @@
 // utils.js - funções utilitárias puras
+import { authHeaders, clearToken } from "./auth.js";
+import { showToast } from "./toast.js";
 
 export function toLocalDate(isoDate) {
   if (!isoDate) return "-";
@@ -23,13 +25,35 @@ export async function fetchJson(path, options = {}) {
     const response = await fetch(path, {
       cache: "no-store",
       ...options,
+      headers: authHeaders(options.headers),
       signal: controller.signal,
     });
+    if (response.status === 401) {
+      clearToken();
+      window.location.href = "/login.html";
+      const error = new Error("Sessão expirada. Faça login novamente.");
+      showToast(error.message, "warning");
+      throw error;
+    }
     if (!response.ok) {
       const body = await response.json().catch(() => ({}));
-      throw new Error(body.erro || "Falha na requisição");
+      const error = new Error(body.erro || "Falha na requisição");
+      showToast(error.message);
+      throw error;
     }
     return response.json();
+  } catch (error) {
+    if (error.name === "AbortError") {
+      const msg = "Tempo de requisição esgotado.";
+      showToast(msg);
+      throw new Error(msg);
+    }
+    if (error.name === "TypeError") {
+      const msg = "Falha de rede ao contactar o servidor.";
+      showToast(msg);
+      throw new Error(msg);
+    }
+    throw error;
   } finally {
     clearTimeout(timeout);
   }

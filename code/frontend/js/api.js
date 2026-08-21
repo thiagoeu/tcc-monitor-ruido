@@ -1,4 +1,6 @@
 import { fetchJson } from "./utils.js";
+import { authHeaders } from "./auth.js";
+import { showToast } from "./toast.js";
 
 export async function fetchAmbientes() {
   return fetchJson("/api/ambientes");
@@ -39,5 +41,36 @@ export async function excluirAmbiente(id) {
 }
 
 export async function downloadRelatorioTxt(hours) {
-  window.location.href = `/api/relatorios/txt?hours=${hours}`;
+  try {
+    const response = await fetch(`/api/relatorios/txt?hours=${hours}`, {
+      headers: authHeaders(),
+    });
+    if (response.status === 401) {
+      window.location.href = "/login.html";
+      const error = new Error("Sessão expirada. Faça login novamente.");
+      showToast(error.message, "warning");
+      throw error;
+    }
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}));
+      const error = new Error(body.erro || "Falha ao baixar relatório");
+      showToast(error.message);
+      throw error;
+    }
+
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "relatorio_ruido.txt";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    if (error.name === "TypeError") {
+      showToast("Falha de rede ao contactar o servidor.");
+    }
+    throw error;
+  }
 }

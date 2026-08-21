@@ -1,274 +1,448 @@
-# TCC Monitor de Ruído (Raspberry Pi 3 B+)
+# NoiseRadar — Sistema de Monitoramento de Ruído
 
-Aplicação de monitoramento acústico para execução **headless** no Raspberry Pi 3 B+, com baixo custo operacional.
-
-## Recursos
-
-- Backend Flask + SQLite local
-- Frontend separado em arquivos (`HTML`, `CSS`, `JS`)
-- Dashboard com seções em acordeão para reduzir poluição visual
-- Cadastro e exclusão de ambientes/sensores
-- Monitoramento em tempo real
-- Alertas de limite excedido
-- Gráficos leves (tendência e percentual de alertas)
-- Relatórios com percentuais por período (resumo + download em TXT)
-
-## Estrutura
-
-- `code/backend/main.py`: entrypoint da API
-- `code/backend/app/__init__.py`: factory da aplicação
-- `code/backend/app/database.py`: conexão e bootstrap do banco
-- `code/backend/app/services.py`: regras de negócio e relatórios
-- `code/backend/app/routes.py`: rotas HTTP
-- `code/frontend/index.html`: estrutura da interface
-- `code/frontend/assets/style.css`: estilos da interface
-- `code/frontend/assets/app.js`: lógica da interface
-- `code/mock/sensor.py`: mock de sensores
-- `code/deploy/*.service`: serviços `systemd`
-
-## Requisitos no Raspberry
-
-```bash
-sudo apt update
-sudo apt install -y python3-venv python3-full git
-```
-
-## Instalação
-
-```bash
-cd ~
-git clone git@github.com:thiagoeu/tcc-monitor-ruido.git
-cd tcc-monitor-ruido
-git checkout code
-
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-pip install -r requirements.txt
-```
-
-## Execução manual
-
-### Terminal 1 (backend)
-
-```bash
-cd ~/tcc-monitor-ruido
-source .venv/bin/activate
-python code/backend/main.py
-```
-
-## Conexão física do sensor no Raspberry Pi 3 B+
-
-O projeto também suporta um sensor Modbus RTU físico ligado direto na UART do Raspberry Pi. Se o módulo do sensor operar em TTL 5V na linha TX, use divisor de tensão ou conversor de nível lógico antes de entrar no RX do Pi.
-
-### Ligações recomendadas
-
-| Pino do Sensor | Pino do Raspberry Pi 3B (físico) | Nome no Raspberry Pi |
-| --- | --- | --- |
-| VCC | Pino 2 ou 4 | 5V |
-| GND | Pino 6, 9, 14, 20, 25, 30, 34 ou 39 | GND |
-| TX | Pino 10, passando por divisor de tensão se necessário | GPIO15 (RX) |
-| RX | Pino 8 | GPIO14 (TX) |
-
-### Liberando a porta serial
-
-1. Abra o configurador do Raspberry Pi:
-
-```bash
-sudo raspi-config
-```
-
-2. Vá em Interface Options e depois em Serial Port.
-3. Quando perguntar se o console de login deve ficar acessível pela serial, responda Não.
-4. Quando perguntar se o hardware da porta serial deve ser habilitado, responda Sim.
-
-Depois, desative o Bluetooth na UART editando o arquivo de configuração:
-
-```bash
-sudo nano /boot/config.txt
-```
-
-Em sistemas mais novos, use:
-
-```bash
-sudo nano /boot/firmware/config.txt
-```
-
-Adicione a linha abaixo no final do arquivo:
-
-```text
-dtoverlay=disable-bt
-```
-
-Reinicie o Raspberry Pi:
-
-```bash
-sudo reboot
-```
-
-Após o reboot, a porta serial do hardware fica disponível em `/dev/ttyAMA0`.
-
-### Uso com o sensor físico
-
-O leitor físico já está preparado para Modbus RTU via UART e usa `/dev/ttyAMA0` por padrão. A comunicação padrão é `9600 8N1`, com endereço Modbus `1` e registrador `0` como valor inicial configurável.
-
-Exemplo de execução:
-
-```bash
-cd code
-python sensor/sensor.py --api-url http://127.0.0.1:5000/api/medicoes --port /dev/ttyAMA0 --baudrate 9600 --slave-addr 1 --register 0
-```
-
-Nesse modo, não há controle de direção de RS485, porque a serial TTL lida diretamente com transmissão e recepção.
-
-### Terminal 2 (mock)
-
-#### Opção A: Modo Dinâmico (Recomendado)
-
-O mock busca **automaticamente** todos os sensores cadastrados no backend, independente do nome. Novos sensores adicionados pelo dashboard são detectados a cada 30 segundos.
-
-```bash
-cd ~/tcc-monitor-ruido
-source .venv/bin/activate
-python code/mock/sensor.py --api-url http://127.0.0.1:5000/api/medicoes --interval 5 --dynamic
-```
-
-**Vantagens:**
-- Sensores adicionados no dashboard geram leituras automaticamente
-- Não precisa reiniciar o mock ao cadastrar novo sensor
-- Nomenclatura livre: `my-sensor-01`, `Lab_A`, `Sala_Principal` - qualquer nome funciona
-- Faixa de dB calculada dinamicamente baseada no `limite_db` de cada ambiente
-
-**Output esperado:**
-```
-Iniciando mock: intervalo=5s, modo_dinâmico=True
-✓ Modo DINÂMICO ativado: novos sensores serão detectados automaticamente
-Enviando para: http://127.0.0.1:5000/api/medicoes
-[Ciclo 1] ✓ Detectados 2 sensor(es) do backend
-[Sala Principal] 68.5 dB @ 45-75 -> OK
-[Laboratório] 52.3 dB @ 45-85 -> OK
-```
-
-#### Opção B: Modo Legado (Configuração manual)
-
-Se preferir especificar sensores explicitamente via linha de comando:
-
-```bash
-cd ~/tcc-monitor-ruido
-source .venv/bin/activate
-python code/mock/sensor.py --api-url http://127.0.0.1:5000/api/medicoes --interval 5 --sensors e06a-001:45:82,e06a-002:35:78
-```
-
-**Formato:** `sensorID:min_dB:max_dB,sensorID2:min_dB:max_dB,...`
-
-⚠️ **Aviso:** Neste modo, sensores novos cadastrados no dashboard **NÃO** geram leituras. Requer reiniciar o mock com a nova configuração.
+> Projeto acadêmico (TCC) de monitoramento de ruído em tempo real com sensor via app mobile, dashboard web e backend Flask.
 
 ---
 
-## Como funcionam os sensores
+## 📑 Índice
 
-1. **Sem modo `--dynamic`:** O mock só gera leituras para sensores configurados via `--sensors`
-   - Problema: Novo sensor cadastrado no dashboard não recebe simulações
-   - Solução: Reiniciar mock com sensor adicionado
+1. [Visão Geral](#visão-geral)
+2. [Estrutura do Projeto](#estrutura-do-projeto)
+3. [Modificações Recentes](#modificações-recentes)
+4. [Pré-requisitos](#pré-requisitos)
+5. [Instalação e Execução — Linux / Fedora](#instalação-e-execução--linux--fedora)
+6. [Instalação e Execução — Windows](#instalação-e-execução--windows)
+7. [App Mobile (Expo)](#app-mobile-expo)
+8. [Simulador de Sensor (Mock)](#simulador-de-sensor-mock)
+9. [Rotas principais da API](#rotas-principais-da-api)
+10. [Problemas Comuns](#problemas-comuns)
 
-2. **Com modo `--dynamic`:** O mock faz `GET /api/ambientes` a cada 30 segundos
-   - Busca lista atualizada de sensores do backend
-   - Extrai `sensor_id` e `limite_db` de cada ambiente
-   - Calcula faixa de dB automaticamente: `[limite - 20, limite + 10]`
-   - Gera leituras contínuas para todos (12% de chance de spike +5-12 dB acima da faixa)
+---
 
-**Nome dos sensores:** No dashboard, você pode usar qualquer nomenclatura. O backend aceita qualquer `sensor_id`. Exemplos válidos:
-- `e06a-001` (padrão)
-- `Lab_A`, `Sala Principal`, `my-sensor-01`
-- Caracteres especiais são aceitos
+## Visão Geral
 
-## Acesso ao dashboard
+O **NoiseRadar** é um sistema completo de monitoramento de ruído composto por:
 
-Abra em outro dispositivo da mesma rede local:
+| Componente | Tecnologia | Função |
+|---|---|---|
+| **Backend** | Python / Flask / SQLite | API REST + servir o frontend |
+| **Frontend Web** | HTML / CSS / JavaScript | Dashboard e gráficos |
+| **App Mobile** | React Native / Expo | Sensor via microfone do celular |
+| **Mock** | Python | Simulador de sensor para testes |
 
-```text
-http://IP_DO_RASPBERRY:5000
+---
+
+## Estrutura do Projeto
+
+```
+tcc-monitor-ruido/
+├── code/
+│   ├── backend/          # API Flask + SQLite
+│   │   ├── app/
+│   │   │   ├── __init__.py
+│   │   │   ├── database.py
+│   │   │   ├── routes.py
+│   │   │   └── services/
+│   │   └── main.py
+│   ├── frontend/         # Dashboard Web (HTML/CSS/JS)
+│   │   ├── index.html
+│   │   ├── graficos.html
+│   │   ├── css/style.css
+│   │   ├── js/
+│   │   └── asserts/      # Logos e imagens
+│   ├── mobile/           # App Expo (React Native)
+│   │   ├── src/
+│   │   ├── App.js
+│   │   ├── app.config.js
+│   │   └── .env          # ← URL da API (configurar aqui)
+│   └── mock/
+│       └── sensor.py     # Simulador de sensor
+└── requirements.txt
 ```
 
-Exemplo:
+---
 
-```text
-http://192.168.18.211:5000
-```
+## Modificações Recentes
 
-## Relatórios
+As alterações abaixo foram realizadas na branch `feature/ui-update-fixes`:
 
-### Resumo JSON por janela de horas
+### 🎨 Identidade Visual — NoiseRadar
+- **Nome do produto definido**: NoiseRadar
+- **Logo transparente** (`logo_do_tcc_transparente.png`) adicionada à sidebar do dashboard
+- Títulos das páginas atualizados para "NoiseRadar - Dashboard" e "NoiseRadar - Gráficos"
+- Sidebar alargada para 240px para acomodar a logo horizontal
+
+### 📊 Dashboard — Estados de Monitoramento
+Os cards de ambiente agora exibem **3 estados fixos** e bem definidos:
+
+| Estado | Condição | Cor |
+|---|---|---|
+| 🔴 **Acima do limite** | Sensor ativo com dB acima do limite configurado | Vermelho |
+| 🟢 **Normal** | Sensor ativo dentro do limite | Verde |
+| ⚫ **Sem medições** | Nenhuma sessão ativa / sensor offline | Cinza |
+
+### 📱 App Mobile — Conectividade
+- Header `bypass-tunnel-reminder: true` adicionado em todas as chamadas de API para evitar o interceptor do `localtunnel`
+- Arquivo `.env` do mobile deve conter a URL correta do backend
+
+### 🗑️ Salas Mock Removidas
+- Ambientes de teste/mock foram removidos da interface — cadastre apenas ambientes reais
+
+---
+
+## Pré-requisitos
+
+### Para o Backend e Mock
+
+| Ferramenta | Versão mínima | Verificar |
+|---|---|---|
+| Python | 3.10+ | `python --version` |
+| pip | qualquer | `pip --version` |
+| Git | qualquer | `git --version` |
+
+### Para o App Mobile
+
+| Ferramenta | Versão mínima | Verificar |
+|---|---|---|
+| Node.js | 18+ | `node --version` |
+| npm | 9+ | `npm --version` |
+| Expo Go | última | Instalar no celular pela loja |
+
+---
+
+## Instalação e Execução — Linux / Fedora
+
+### 1. Clonar o repositório
 
 ```bash
-curl "http://127.0.0.1:5000/api/relatorios/resumo?hours=24"
+git clone https://github.com/thiagoeu/tcc-monitor-ruido.git
+cd tcc-monitor-ruido
 ```
 
-### Download do relatório TXT
+### 2. Criar e ativar o ambiente virtual Python
 
 ```bash
-curl -L "http://127.0.0.1:5000/api/relatorios/txt?hours=24" -o relatorio.txt
+python3 -m venv .venv
+source .venv/bin/activate
 ```
 
-No dashboard, a seção **Relatórios** já mostra percentuais e permite baixar o TXT.
+> Você verá `(.venv)` no início do terminal quando ativo.
 
-## API principal
-
-- `GET /health`
-- `GET /api/ambientes`
-- `POST /api/ambientes`
-- `PUT /api/ambientes/{id}`
-- `DELETE /api/ambientes/{id}`
-- `POST /api/medicoes`
-- `GET /api/monitoramento`
-- `GET /api/alertas`
-- `GET /api/relatorios/resumo?hours=24`
-- `GET /api/relatorios/txt?hours=24`
-
-## Rodar no boot com systemd
-
-Os serviços em `code/deploy` estão ajustados para:
-
-- usuário `ruido`
-- venv em `/home/ruido/tcc-monitor-ruido/.venv`
-- modo **dinâmico** do mock (detecta sensores automaticamente do backend)
-
-Instalação:
+### 3. Instalar dependências Python
 
 ```bash
-cd ~/tcc-monitor-ruido
-sudo cp code/deploy/monitor-ruido-backend.service /etc/systemd/system/
-sudo cp code/deploy/monitor-ruido-mock.service /etc/systemd/system/
-
-sudo systemctl daemon-reload
-sudo systemctl enable monitor-ruido-backend.service
-sudo systemctl enable monitor-ruido-mock.service
-sudo systemctl restart monitor-ruido-backend.service
-sudo systemctl restart monitor-ruido-mock.service
+pip install -r requirements.txt
 ```
 
-**Para usar modo legado (sensores fixos):** Editar `/etc/systemd/system/monitor-ruido-mock.service` e remover `--dynamic`:
-
-```ini
-ExecStart=/home/ruido/tcc-monitor-ruido/.venv/bin/python ... --sensors e06a-001:45:82,e06a-002:35:78
-```
-
-Depois recarregar:
+Se o arquivo `requirements.txt` não existir ou faltar alguma dependência:
 
 ```bash
-sudo systemctl daemon-reload
-sudo systemctl restart monitor-ruido-mock.service
+pip install flask requests pyserial minimalmodbus
 ```
 
-Logs:
+### 4. Executar o Backend
 
 ```bash
-sudo journalctl -u monitor-ruido-backend.service -f
-sudo journalctl -u monitor-ruido-mock.service -f
+cd code/backend
+python main.py
 ```
 
-## Observações
+Saída esperada:
 
-- O backend faz bootstrap automático dos sensores padrão `e06a-001` e `e06a-002`.
-- Para testes de TCC, o servidor Flask de desenvolvimento é suficiente.
-- Comando correto para executar é `python`, não `run`.
+```
+* Serving Flask app 'app'
+* Running on http://127.0.0.1:5000
+* Running on http://192.168.X.X:5000   ← IP da sua máquina na rede local
+```
+
+> ✅ O backend já serve o frontend automaticamente. Acesse `http://127.0.0.1:5000` no navegador.
+
+### 5. Acessar o Dashboard Web
+
+Abra no navegador:
+
+```
+http://127.0.0.1:5000           → Dashboard principal
+http://127.0.0.1:5000/graficos.html  → Página de gráficos
+```
+
+### Instalar Node.js no Fedora (caso não tenha)
+
+```bash
+sudo dnf install nodejs npm -y
+node --version
+```
+
+---
+
+## Instalação e Execução — Windows
+
+### 1. Clonar o repositório
+
+Abra o **PowerShell** ou **Git Bash** e execute:
+
+```powershell
+git clone https://github.com/thiagoeu/tcc-monitor-ruido.git
+cd tcc-monitor-ruido
+```
+
+### 2. Criar e ativar o ambiente virtual Python
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+```
+
+> Se aparecer erro de execução de scripts, rode antes:
+> ```powershell
+> Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+> ```
+
+### 3. Instalar dependências Python
+
+```powershell
+pip install -r requirements.txt
+```
+
+Ou manualmente:
+
+```powershell
+pip install flask requests pyserial minimalmodbus
+```
+
+### 4. Executar o Backend
+
+```powershell
+cd code\backend
+python main.py
+```
+
+Saída esperada:
+
+```
+* Running on http://127.0.0.1:5000
+* Running on http://192.168.X.X:5000
+```
+
+### 5. Acessar o Dashboard Web
+
+Abra no navegador:
+
+```
+http://127.0.0.1:5000
+```
+
+### Instalar Node.js no Windows (caso não tenha)
+
+Baixe e instale em: [https://nodejs.org](https://nodejs.org) (versão LTS recomendada)
+
+---
+
+## App Mobile (Expo)
+
+O app mobile usa o **microfone do celular** como sensor de decibéis e envia os dados ao backend.
+
+### Pré-requisitos
+
+- Node.js 18+ instalado na máquina
+- App **Expo Go** instalado no celular ([Android](https://play.google.com/store/apps/details?id=host.exp.exponent) / [iOS](https://apps.apple.com/app/expo-go/id982107779))
+- Celular e computador na **mesma rede Wi-Fi**
+
+### 1. Instalar dependências do app
+
+```bash
+cd code/mobile
+npm install
+```
+
+### 2. Configurar a URL do backend
+
+Edite o arquivo `code/mobile/.env`:
+
+```env
+API_BASE_URL=http://SEU_IP_LOCAL:5000
+```
+
+> **Como descobrir o IP da sua máquina:**
+> - **Linux/Fedora**: `ip addr show | grep "inet "` — use o IP da interface (ex: `192.168.1.15`)
+> - **Windows**: `ipconfig` no CMD — use o "Endereço IPv4" da interface Wi-Fi/Ethernet
+>
+> **Exemplo**: `API_BASE_URL=http://192.168.1.15:5000`
+
+### 3. Iniciar o app
+
+**Opção A — Rede local (celular e PC na mesma rede Wi-Fi):**
+
+```bash
+npx expo start --clear
+```
+
+Escaneie o QR Code com o **Expo Go** no Android, ou com a **câmera** no iOS.
+
+**Opção B — Tunnel (redes diferentes ou VPN):**
+
+```bash
+npx expo start --tunnel --clear
+```
+
+> ⚠️ Na primeira vez o Expo perguntará se instala o `@expo/ngrok` — responda **yes**.
+
+### 4. Cadastrar um ambiente antes de medir
+
+1. Acesse o dashboard web (`http://SEU_IP:5000`)
+2. Na seção **"Cadastro de ambiente"**, preencha:
+   - **Nome**: ex. "Lab Programação 1"
+   - **Localização**: ex. "Vivência"
+   - **Sensor ID**: ex. "Celular-01" ← este nome deve bater com o que você selecionar no app
+   - **Limite dB**: ex. 65
+3. Clique em **Salvar**
+4. O ambiente aparecerá no app mobile para seleção
+
+---
+
+## Simulador de Sensor (Mock)
+
+O mock simula um sensor enviando medições aleatórias ao backend — útil para testes sem celular.
+
+### Linux / Fedora
+
+```bash
+# Com ambiente virtual ativo:
+cd code
+python mock/sensor.py --dynamic
+```
+
+### Windows
+
+```powershell
+# Com ambiente virtual ativo:
+cd code
+python mock\sensor.py --dynamic
+```
+
+Saída esperada:
+
+```
+✓ Modo DINÂMICO ativado
+[Lab Programação 1] 72.4 dB → ALERTA
+[Sala Teste] 58.1 dB → Normal
+```
+
+> O mock usa os ambientes já cadastrados no banco. Certifique-se de ter cadastrado ao menos um ambiente antes de rodar.
+
+---
+
+## Rotas principais da API
+
+| Método | Rota | Descrição |
+|---|---|---|
+| GET | `/api/ambientes` | Lista todos os ambientes |
+| GET | `/api/ambientes?ativo=1` | Lista ambientes ativos |
+| POST | `/api/ambientes` | Cadastra novo ambiente |
+| DELETE | `/api/ambientes/{id}` | Remove ambiente |
+| POST | `/api/medicoes` | Envia uma medição |
+| GET | `/api/medicoes` | Lista medições recentes |
+| GET | `/api/monitoramento` | Estado atual de todos sensores |
+| POST | `/api/sessoes` | Inicia sessão de medição |
+| DELETE | `/api/sessoes/{sensor_id}` | Encerra sessão |
+| PUT | `/api/sessoes/{sensor_id}/heartbeat` | Mantém sessão ativa |
+| GET | `/api/alertas` | Lista alertas gerados |
+| GET | `/api/relatorios/resumo` | Relatório de medições |
+
+---
+
+## Problemas Comuns
+
+### ❌ `python: command not found` (Linux/Fedora)
+
+Use `python3` no lugar de `python`:
+
+```bash
+python3 main.py
+```
+
+Ou crie um alias:
+
+```bash
+alias python=python3
+```
+
+---
+
+### ❌ Porta 5000 já está em uso
+
+**Linux:**
+
+```bash
+# Descobrir qual processo usa a porta:
+lsof -i :5000
+
+# Matar o processo (substitua XXXX pelo PID):
+kill -9 XXXX
+```
+
+**Windows (PowerShell):**
+
+```powershell
+netstat -ano | findstr :5000
+taskkill /PID XXXX /F
+```
+
+---
+
+### ❌ App mobile diz "Algo deu errado"
+
+1. Verifique se o backend está rodando: acesse `http://SEU_IP:5000` no navegador do celular
+2. Certifique-se de que o IP no `.env` do mobile é o IP atual da máquina (pode mudar ao reconectar na rede)
+3. Pare o Expo e reinicie com `--clear` para limpar o cache:
+   ```bash
+   npx expo start --clear
+   ```
+
+---
+
+### ❌ App mobile não carrega as salas
+
+- O backend precisa estar rodando
+- Ao menos um ambiente precisa estar cadastrado no dashboard web
+- O `.env` do mobile precisa apontar para o IP correto
+
+---
+
+### ❌ JSON Parse error no app mobile
+
+Ocorre quando o app recebe uma página HTML em vez de JSON (ex: página de aviso do localtunnel).
+
+✅ **Solução já aplicada**: todas as requisições do app enviam o header `bypass-tunnel-reminder: true`.
+
+Se persistir com `--tunnel`, verifique se o `npx expo start` foi reiniciado após a mudança no `.env`.
+
+---
+
+### ❌ Erro de autenticação no `git push`
+
+O repositório usa SSH. Certifique-se de que sua chave SSH está cadastrada no GitHub:
+
+```bash
+# Ver sua chave pública:
+cat ~/.ssh/id_ed25519.pub
+```
+
+Cole o conteúdo em: **GitHub → Settings → SSH and GPG keys → New SSH key**
+
+---
+
+## 🛠️ Tecnologias
+
+- **Python 3.10+** / **Flask** / **SQLite**
+- **HTML5** / **CSS3** / **JavaScript (ES6+)**
+- **React Native** / **Expo SDK 54**
+- **expo-av** (captura de áudio)
+- **Chart.js** (gráficos no dashboard)
+
+---
+
+## 👤 Autor
+
+Projeto acadêmico — TCC — Monitoramento de Ruído  
+GitHub: [@thiagoeu](https://github.com/thiagoeu)

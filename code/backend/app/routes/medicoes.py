@@ -8,6 +8,7 @@ from app.services import (
 )
 
 from . import main_bp
+from .auth import login_required
 
 
 def json_error(message, status=400):
@@ -75,6 +76,7 @@ def http_create_medicao():
 
 
 @main_bp.route("/api/monitoramento", methods=["GET"])
+@login_required
 def http_monitoramento():
     limit = parse_int(
         request.args.get("limit", 60),
@@ -87,6 +89,7 @@ def http_monitoramento():
 
 
 @main_bp.route("/api/alertas", methods=["GET"])
+@login_required
 def http_alertas():
     limit = parse_int(
         request.args.get("limit", 50),
@@ -99,6 +102,7 @@ def http_alertas():
 
 
 @main_bp.route("/api/sensores/fisicos", methods=["GET"])
+@login_required
 def http_scan_sensores_fisicos():
     port = request.args.get("port", "/dev/serial0")
     baudrate = parse_int(request.args.get("baudrate", 9600), 9600, 300, 115200)

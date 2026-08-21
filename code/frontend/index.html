@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>NoiseRadar - Dashboard</title>
     <link rel="stylesheet" href="/css/style.css" />
+    <script>
+      if (!localStorage.getItem("noiseradar_token")) {
+        window.location.replace("/login.html");
+      }
+    </script>
   </head>
   <body>
     <div class="app-layout">
@@ -21,6 +26,7 @@
         </ul>
         <div class="sidebar-footer">
           <small id="status-sidebar">Online</small>
+          <button type="button" id="logoutBtn" class="ghost-btn" style="margin-top:8px">Sair</button>
         </div>
       </nav>
 

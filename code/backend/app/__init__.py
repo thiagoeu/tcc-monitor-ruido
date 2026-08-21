@@ -1,10 +1,11 @@
+import os
 from pathlib import Path
 from flask import Flask, send_from_directory
-from .database import init_db
+from .database import init_db, seed_default_admin
 from .routes import main_bp
 
 
-def create_app():
+def create_app(config_overrides=None):
     base_dir = Path(__file__).resolve().parent.parent   # backend/
     project_dir = base_dir.parent                       # code/
     frontend_dir = project_dir / "frontend"             # code/frontend/
@@ -18,7 +19,11 @@ def create_app():
     app.config.update({
         "DB_PATH": str(db_path),
         "FRONTEND_DIR": str(frontend_dir),
+        "TOKEN_TTL_HORAS": int(os.getenv("APP_TOKEN_TTL_HORAS", "168")),
     })
+
+    if config_overrides:
+        app.config.update(config_overrides)
 
     @app.after_request
     def add_cors_headers(response):
@@ -36,5 +41,6 @@ def create_app():
 
     with app.app_context():
         init_db()
+        seed_default_admin()
 
     return app

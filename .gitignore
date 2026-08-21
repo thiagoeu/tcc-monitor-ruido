@@ -7,3 +7,6 @@ code/backend/ruido.db
 
 # Ambiente virtual
 .venv/
+
+# Firmware do ESP32
+code/hardware/esp32_firmware/main/config.h

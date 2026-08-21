@@ -1,0 +1,71 @@
+/* ============ BUTTONS ============ */
+
+button, .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-family: "Inter", Arial, sans-serif;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background var(--transition), border-color var(--transition), opacity var(--transition), transform 0.1s ease;
+  text-decoration: none;
+}
+
+button:active, .btn:active {
+  transform: scale(0.97);
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #000;
+  border-color: var(--accent);
+}
+
+.btn-primary:hover {
+  background: #00b36a;
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--text-secondary);
+  border-color: var(--line);
+}
+
+.btn-secondary:hover {
+  background: var(--panel-hover);
+  color: var(--text);
+}
+
+.btn-danger, .danger-btn {
+  background: transparent;
+  color: var(--danger);
+  border-color: var(--danger-dim);
+  padding: 5px 10px;
+  font-size: 0.78rem;
+}
+
+.btn-danger:hover, .danger-btn:hover {
+  background: var(--danger-dim);
+}
+
+.btn-ghost, .ghost-btn {
+  background: transparent;
+  color: var(--text-secondary);
+  border-color: var(--line);
+  padding: 6px 12px;
+}
+
+.btn-ghost:hover, .ghost-btn:hover {
+  background: var(--panel-hover);
+  color: var(--text);
+}
+
+button:disabled, .btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

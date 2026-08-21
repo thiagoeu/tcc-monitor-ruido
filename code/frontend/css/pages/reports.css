@@ -1,0 +1,129 @@
+/* ============ REPORT / EXPORT ============ */
+
+.export-panel {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 640px) {
+  .export-panel { grid-template-columns: 1fr; }
+}
+
+.export-summary {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  text-align: right;
+}
+
+.export-summary .big-number {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1;
+}
+
+.export-summary .big-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+
+/* ============ FILTERS BAR ============ */
+
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.filter-bar select,
+.filter-bar input {
+  width: auto;
+  flex: 1;
+  min-width: 130px;
+  max-width: 200px;
+}
+
+
+/* ============ PAGE — GRAFICOS ============ */
+
+.graficos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 16px;
+}
+
+.grafico-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px;
+  overflow: hidden;
+}
+
+.grafico-header {
+  margin-bottom: 12px;
+}
+
+.grafico-header h3 {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.grafico-header small {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  display: block;
+  margin-top: 2px;
+}
+
+.grafico-card canvas {
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  margin-bottom: 10px;
+  background: var(--bg);
+}
+
+.grafico-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.stat-item {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.stat-label {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.stat-value {
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin-top: 2px;
+  color: var(--accent);
+}
+
+.stat-value.alert { color: var(--danger); }

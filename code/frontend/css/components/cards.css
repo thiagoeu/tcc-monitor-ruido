@@ -1,0 +1,131 @@
+/* ============ GRID & CARDS ============ */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.card:hover {
+  border-color: var(--line-soft);
+  box-shadow: var(--shadow-sm);
+}
+
+.card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.card h3 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+
+/* ============ CHART GRID ============ */
+
+.chart-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.chart-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px;
+}
+
+.chart-card h3 {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 12px;
+}
+
+canvas {
+  width: 100%;
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+}
+
+
+/* ============ TAGS / BADGES ============ */
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 999px;
+  padding: 3px 9px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.tag-ok {
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+
+.tag-warn {
+  background: var(--danger-dim);
+  color: var(--danger);
+}
+
+.tag-muted {
+  background: rgba(139, 150, 168, 0.12);
+  color: var(--text-muted);
+}
+
+/* legado — mantém compatibilidade */
+.ok  { background: var(--accent-dim);  color: var(--accent); border-radius:999px; padding:3px 9px; font-size:.75rem; font-weight:600; display:inline-block; }
+.warn { background: var(--danger-dim); color: var(--danger); border-radius:999px; padding:3px 9px; font-size:.75rem; font-weight:600; display:inline-block; }
+.muted-tag { background: rgba(139,150,168,.12); color: var(--text-muted); border-radius:999px; padding:3px 9px; font-size:.75rem; font-weight:600; display:inline-block; }
+
+
+/* ============ STAT / METRIC CARDS ============ */
+
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+.metric {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+}
+
+.metric .label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.metric .value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text);
+}

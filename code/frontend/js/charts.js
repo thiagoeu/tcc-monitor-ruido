@@ -65,14 +65,28 @@ export function drawTrendChart(medicoes) {
 
   const paddingLeft = 45;
   const paddingRight = 15;
-  const paddingTop = 35;
   const paddingBottom = 20;
 
+  // Legend layout calculation
+  ctx.font = "11px sans-serif";
+  let legendLines = 1;
+  let currentX = paddingLeft;
+  activeGroups.forEach((group) => {
+    const label = `${group.ambiente_nome} (${group.sensor_id})`;
+    const textWidth = ctx.measureText(label).width;
+    if (currentX + textWidth + 24 > width - paddingRight) {
+      currentX = paddingLeft;
+      legendLines++;
+    }
+    currentX += textWidth + 24;
+  });
+
+  const paddingTop = 15 + legendLines * 18;
   const graphWidth = width - paddingLeft - paddingRight;
   const graphHeight = height - paddingTop - paddingBottom;
 
   // Background
-  ctx.fillStyle = "#0f1217";
+  ctx.fillStyle = "transparent";
   ctx.fillRect(0, 0, width, height);
 
   // Horizontal grid lines & Y labels
@@ -114,6 +128,15 @@ export function drawTrendChart(medicoes) {
     });
     ctx.stroke();
 
+    // Area fill
+    ctx.lineTo(paddingLeft + graphWidth, paddingTop + graphHeight);
+    ctx.lineTo(paddingLeft, paddingTop + graphHeight);
+    ctx.closePath();
+    ctx.globalAlpha = 0.15;
+    ctx.fillStyle = group.color;
+    ctx.fill();
+    ctx.globalAlpha = 1.0;
+
     // Dots
     ctx.fillStyle = group.color;
     groupMeds.forEach((med, index) => {
@@ -131,11 +154,16 @@ export function drawTrendChart(medicoes) {
   ctx.font = "11px sans-serif";
 
   let legendX = paddingLeft;
-  const legendY = 8;
+  let legendY = 8;
 
   activeGroups.forEach((group) => {
     const label = `${group.ambiente_nome} (${group.sensor_id})`;
     const textWidth = ctx.measureText(label).width;
+
+    if (legendX + textWidth + 24 > width - paddingRight) {
+      legendX = paddingLeft;
+      legendY += 18;
+    }
 
     ctx.fillStyle = group.color;
     ctx.beginPath();
@@ -158,30 +186,101 @@ export function drawAlertRateChart(report) {
     return;
   }
   const ctx = canvas.getContext("2d");
-  const width = canvas.width;
-  const height = canvas.height;
-  const padding = 16;
+  
+  // Set sharp resolution
+  const width = canvas.clientWidth || canvas.width || 300;
+  const height = canvas.clientHeight || canvas.height || 170;
+  canvas.width = width;
+  canvas.height = height;
+
+  const paddingLeft = 16;
+  const paddingRight = 16;
+  const paddingTop = 20;
+  // Increase bottom padding to accommodate rotated text
+  const paddingBottom = 45; 
+
   ctx.clearRect(0, 0, width, height);
-  const barAreaWidth = width - padding * 2;
-  const barWidth = Math.max(
-    24,
-    barAreaWidth / Math.max(ambientes.length * 1.7, 1),
-  );
-  const gap = barWidth * 0.7;
+
+  // Draw horizontal grid lines
+  ctx.strokeStyle = "#1f2937";
+  ctx.lineWidth = 1;
+  ctx.fillStyle = "#9ca3af";
+  ctx.font = "10px Arial";
+  ctx.textAlign = "right";
+  ctx.textBaseline = "middle";
+
+  const gridLines = 4;
+  for (let i = 0; i <= gridLines; i++) {
+    const y = paddingTop + (i / gridLines) * (height - paddingTop - paddingBottom);
+    const val = 100 - (i / gridLines) * 100;
+    
+    ctx.beginPath();
+    ctx.moveTo(paddingLeft + 20, y);
+    ctx.lineTo(width - paddingRight, y);
+    ctx.stroke();
+
+    ctx.fillText(`${Math.round(val)}%`, paddingLeft + 15, y);
+  }
+
+  const barAreaWidth = width - paddingLeft - paddingRight - 20;
+  const startX = paddingLeft + 25;
+  
+  const gapRatio = 0.4;
+  const barWidth = Math.min(35, barAreaWidth / (ambientes.length + (ambientes.length - 1) * gapRatio));
+  const gap = barWidth * gapRatio;
+  
+  const totalBarsWidth = ambientes.length * barWidth + (ambientes.length - 1) * gap;
+  const offsetX = startX + Math.max(0, (barAreaWidth - totalBarsWidth) / 2);
+
   ambientes.forEach((ambiente, index) => {
     const percent = Math.max(
       0,
       Math.min(100, Number(ambiente.percentual_alerta || 0)),
     );
-    const barHeight = ((height - 42) * percent) / 100;
-    const x = padding + index * (barWidth + gap);
-    const y = height - 22 - barHeight;
-    ctx.fillStyle = "#ff8d8d";
-    ctx.fillRect(x, y, barWidth, barHeight);
+    const barHeight = ((height - paddingTop - paddingBottom) * percent) / 100;
+    const x = offsetX + index * (barWidth + gap);
+    const y = height - paddingBottom - barHeight;
+    
+    // Gradient for bar
+    const gradient = ctx.createLinearGradient(0, y, 0, y + barHeight);
+    gradient.addColorStop(0, "#ff8d8d");
+    gradient.addColorStop(1, "#ef4444");
+
+    // Draw Bar
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.moveTo(x, y + barHeight);
+    ctx.lineTo(x, y + 2);
+    ctx.quadraticCurveTo(x, y, x + 2, y);
+    ctx.lineTo(x + barWidth - 2, y);
+    ctx.quadraticCurveTo(x + barWidth, y, x + barWidth, y + 2);
+    ctx.lineTo(x + barWidth, y + barHeight);
+    ctx.closePath();
+    ctx.fill();
+    
+    // Draw Percent on top
+    ctx.fillStyle = "#e5e7eb";
+    ctx.font = "bold 11px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "bottom";
+    ctx.fillText(`${percent.toFixed(0)}%`, x + barWidth / 2, y - 4);
+    
+    // Draw Label rotated
+    ctx.save();
+    ctx.translate(x + barWidth / 2, height - paddingBottom + 8);
+    ctx.rotate(-Math.PI / 4);
+    ctx.textAlign = "right";
+    ctx.textBaseline = "middle";
     ctx.fillStyle = "#a8b2c0";
     ctx.font = "11px Arial";
-    ctx.fillText(`${percent.toFixed(0)}%`, x, y - 4);
-    ctx.fillText(ambiente.sensor_id, x, height - 6);
+    
+    let label = ambiente.ambiente_nome || ambiente.sensor_id;
+    if (label && label.length > 12) {
+      label = label.substring(0, 10) + "...";
+    }
+    
+    ctx.fillText(label || "-", 0, 0);
+    ctx.restore();
   });
 }
 

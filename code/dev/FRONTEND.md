@@ -14,7 +14,12 @@ code/frontend/
 ├── asserts/
 │   └── logo_do_tcc_transparente.png
 ├── css/
-│   └── style.css           # Design System único (dark + light mode)
+│   ├── style.css           # Hub centralizador (usando @import)
+│   ├── variables.css       # Tokens de cor (dark/light)
+│   ├── reset.css           # Reset básico de estilos
+│   ├── utilities.css       # Classes utilitárias gerais
+│   ├── components/         # Módulos de componentes reutilizáveis
+│   └── pages/              # Estilos específicos de cada página
 └── js/
     ├── api.js              # Chamadas ao backend (fetch helpers)
     ├── auth.js             # Autenticação (token JWT em localStorage)
@@ -59,7 +64,7 @@ initDarkMode();
 
 ## Design System
 
-O arquivo `css/style.css` define todas as variáveis, componentes e layouts. Não use estilos inline desnecessários.
+O projeto usa uma arquitetura CSS modular importada no `css/style.css`. Os estilos são separados por responsabilidades (`variables.css`, `reset.css`, `components/`, e `pages/`). Não use estilos inline desnecessários.
 
 ### Variáveis principais
 

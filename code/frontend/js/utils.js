@@ -43,6 +43,7 @@ export function initDarkMode() {
       const next = current === "dark" ? "light" : "dark";
       applyTheme(next);
       localStorage.setItem(THEME_KEY, next);
+      window.dispatchEvent(new CustomEvent("themeChanged", { detail: next }));
     });
   }
 }

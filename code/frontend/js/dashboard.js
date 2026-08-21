@@ -155,6 +155,12 @@ function bootstrap() {
 
   // Auto-refresh a cada 5s
   setInterval(loadDashboard, 5000);
+
+  // Redraw charts on theme change
+  window.addEventListener("themeChanged", () => {
+    loadDashboard();
+    loadReport();
+  });
 }
 
 bootstrap();

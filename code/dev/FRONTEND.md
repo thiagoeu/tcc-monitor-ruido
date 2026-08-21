@@ -97,7 +97,7 @@ O projeto usa uma arquitetura CSS modular importada no `css/style.css`. Os estil
 
 ## Autenticação
 
-O token JWT é salvo em `localStorage` com a chave `noiseradar_token`.
+O token JWT é salvo em `localStorage` com a chave `noiseradar_token` e o objeto do usuário logado na chave `noiseradar_user`.
 
 Toda página protegida inclui no `<head>`:
 
@@ -114,8 +114,17 @@ E no JS da página:
 ```js
 import { requireAuth, logout } from "./auth.js";
 // No bootstrap():
-if (!requireAuth()) return;
+if (!await requireAuth()) return;
 ```
+
+Para páginas restritas a administradores (ex: `configuracoes.html`), usamos:
+
+```js
+import { requireAdmin } from "./auth.js";
+if (!await requireAdmin()) return;
+```
+
+O `requireAdmin` e a API validam os papéis `admin` e `admin_master`.
 
 ## Convenções
 
@@ -128,5 +137,6 @@ if (!requireAuth()) return;
 | Chave | Tipo | Conteúdo |
 |---|---|---|
 | `noiseradar_token` | string | JWT de autenticação |
+| `noiseradar_user` | JSON | Dados do usuário logado (nome, email, papel) |
 | `nr_theme` | string | `"dark"` ou `"light"` |
 | `nr_prefs` | JSON | Objeto de preferências do usuário |

@@ -2,12 +2,13 @@
 
 ## Visão Geral
 
-Autenticação por **Token Bearer** (token opaco armazenado no banco). Permite dois papéis:
+Autenticação por **Token Bearer** (token opaco armazenado no banco). Permite três papéis (RBAC):
 
 | Papel          | Permissões                                        |
 | -------------- | ------------------------------------------------- |
-| `admin`        | Acesso total + gerenciamento de usuários          |
-| `visualizador` | Visualiza dashboards e relatórios                 |
+| `admin_master` | Acesso total + cria/edita qualquer usuário        |
+| `admin`        | Acesso total + cria/edita apenas visualizadores   |
+| `visualizador` | Apenas visualiza dashboards, relatórios e alertas |
 
 Sem dependências novas: hash de senha via `werkzeug.security` (já vem com Flask) e token via `secrets` (stdlib).
 
@@ -15,12 +16,13 @@ Sem dependências novas: hash de senha via `werkzeug.security` (já vem com Flas
 
 ## Credenciais Iniciais (Seed)
 
-Um administrador padrão é criado automaticamente no primeiro startup do backend.
+Um administrador mestre padrão é criado automaticamente no primeiro startup do backend.
 
 | Campo  | Valor padrão                 |
 | ------ | ---------------------------- |
 | E-mail | `admin@noiseradar.local`     |
 | Senha  | `admin123`                   |
+| Papel  | `admin_master`               |
 | Nome   | `Administrador`              |
 
 > ⚠️ **Altere a senha padrão em produção** usando as variáveis de ambiente abaixo.

@@ -83,3 +83,23 @@ def ambiente(client):
     })
     assert response.status_code == 201
     return response.get_json()
+
+
+@pytest.fixture()
+def admin_normal_client(client, client_raw):
+    """Cria um admin (não master) e retorna um _AuthedClient autenticado como ele."""
+    resp = client.post("/api/usuarios", json={
+        "nome": "Admin Normal",
+        "email": "adminormal@noiseradar.local",
+        "senha": "admin456",
+        "papel": "admin",
+    })
+    assert resp.status_code == 201, resp.get_json()
+
+    login_resp = client_raw.post("/api/auth/login", json={
+        "email": "adminormal@noiseradar.local",
+        "senha": "admin456",
+    })
+    assert login_resp.status_code == 200
+    token = login_resp.get_json()["token"]
+    return _AuthedClient(client_raw, token)

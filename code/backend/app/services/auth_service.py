@@ -105,8 +105,8 @@ def create_usuario(payload):
     if not nome or not email or not senha:
         raise ValueError("Campos obrigatórios: nome, email e senha.")
 
-    if papel not in ("admin", "visualizador"):
-        raise ValueError("papel deve ser 'admin' ou 'visualizador'.")
+    if papel not in ("admin_master", "admin", "visualizador"):
+        raise ValueError("papel deve ser 'admin_master', 'admin' ou 'visualizador'.")
 
     connection = get_connection()
     cursor = connection.cursor()
@@ -139,3 +139,144 @@ def list_usuarios():
     rows = cursor.fetchall()
     connection.close()
     return [_usuario_publico(row) for row in rows]
+
+
+def get_usuario(usuario_id):
+    """Retorna um usuário pelo ID (dict público) ou None se não encontrado."""
+    connection = get_connection()
+    cursor = connection.cursor()
+    cursor.execute("SELECT * FROM usuarios WHERE id = ?", (usuario_id,))
+    row = cursor.fetchone()
+    connection.close()
+    return _usuario_publico(row) if row else None
+
+
+def update_usuario(usuario_id, payload):
+    """
+    Atualiza nome, email, papel e/ou ativo de um usuário.
+    Levanta ValueError em payload inválido e RuntimeError em email duplicado.
+    """
+    nome = payload.get("nome")
+    email = payload.get("email")
+    papel = payload.get("papel")
+    ativo = payload.get("ativo")
+
+    # Validações
+    if nome is not None:
+        nome = str(nome).strip()
+        if not nome:
+            raise ValueError("nome não pode ser vazio.")
+
+    if email is not None:
+        email = str(email).strip().lower()
+        if not email:
+            raise ValueError("email não pode ser vazio.")
+
+    if papel is not None:
+        papel = str(papel).strip().lower()
+        if papel not in ("admin_master", "admin", "visualizador"):
+            raise ValueError("papel deve ser 'admin_master', 'admin' ou 'visualizador'.")
+
+    if ativo is not None and ativo not in (0, 1, True, False):
+        raise ValueError("ativo deve ser 0 ou 1.")
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("SELECT * FROM usuarios WHERE id = ?", (usuario_id,))
+    row = cursor.fetchone()
+    if not row:
+        connection.close()
+        return None
+
+    # Verificar email duplicado (excluindo o próprio usuário)
+    if email and email != row["email"]:
+        cursor.execute(
+            "SELECT id FROM usuarios WHERE email = ? AND id != ?",
+            (email, usuario_id),
+        )
+        if cursor.fetchone():
+            connection.close()
+            raise RuntimeError("E-mail já cadastrado.")
+
+    # Monta SET dinâmico apenas com campos fornecidos
+    campos = {}
+    if nome is not None:
+        campos["nome"] = nome
+    if email is not None:
+        campos["email"] = email
+    if papel is not None:
+        campos["papel"] = papel
+    if ativo is not None:
+        campos["ativo"] = int(bool(ativo))
+
+    if not campos:
+        connection.close()
+        return _usuario_publico(row)
+
+    set_clause = ", ".join(f"{k} = ?" for k in campos)
+    values = list(campos.values()) + [usuario_id]
+    cursor.execute(
+        f"UPDATE usuarios SET {set_clause} WHERE id = ?",  # noqa: S608
+        values,
+    )
+    connection.commit()
+
+    cursor.execute("SELECT * FROM usuarios WHERE id = ?", (usuario_id,))
+    updated = cursor.fetchone()
+    connection.close()
+    return _usuario_publico(updated)
+
+
+def delete_usuario(usuario_id):
+    """
+    Soft-delete: marca ativo=0. Preserva dados históricos (medições, alertas).
+    Retorna True se desativado, False se não encontrado.
+    """
+    connection = get_connection()
+    cursor = connection.cursor()
+    cursor.execute(
+        "UPDATE usuarios SET ativo = 0 WHERE id = ? AND ativo = 1",
+        (usuario_id,),
+    )
+    connection.commit()
+    affected = cursor.rowcount
+    connection.close()
+    return affected > 0
+
+
+def change_senha(usuario_id, nova_senha, senha_atual=None, is_admin=False):
+    """
+    Troca a senha de um usuário.
+    - Se is_admin=True, não exige senha_atual (acesso privilegiado do admin).
+    - Se is_admin=False, valida senha_atual antes de trocar.
+    Levanta ValueError se nova_senha for vazia, AuthError se senha_atual incorreta.
+    """
+    nova_senha = str(nova_senha).strip()
+    if len(nova_senha) < 6:
+        raise ValueError("A nova senha deve ter pelo menos 6 caracteres.")
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("SELECT * FROM usuarios WHERE id = ? AND ativo = 1", (usuario_id,))
+    row = cursor.fetchone()
+    if not row:
+        connection.close()
+        return False
+
+    if not is_admin:
+        if not senha_atual:
+            connection.close()
+            raise ValueError("Senha atual é obrigatória.")
+        if not check_password_hash(row["senha_hash"], senha_atual):
+            connection.close()
+            raise PermissionError("Senha atual incorreta.")
+
+    cursor.execute(
+        "UPDATE usuarios SET senha_hash = ? WHERE id = ?",
+        (generate_password_hash(nova_senha), usuario_id),
+    )
+    connection.commit()
+    connection.close()
+    return True

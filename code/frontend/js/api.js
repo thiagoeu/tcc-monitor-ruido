@@ -2,6 +2,18 @@ import { fetchJson } from "./utils.js";
 import { authHeaders } from "./auth.js";
 import { showToast } from "./toast.js";
 
+// ---------------------------------------------------------------------------
+// Auth
+// ---------------------------------------------------------------------------
+
+export async function fetchMe() {
+  return fetchJson("/api/auth/me");
+}
+
+// ---------------------------------------------------------------------------
+// Ambientes
+// ---------------------------------------------------------------------------
+
 export async function fetchAmbientes() {
   return fetchJson("/api/ambientes");
 }
@@ -95,4 +107,40 @@ export async function downloadRelatorioPdf(hours) {
 
 export async function downloadRelatorioCsv(hours) {
   return downloadFile(`/api/relatorios/csv?hours=${hours}`, "relatorio_ruido.csv");
+}
+
+// ---------------------------------------------------------------------------
+// Usuários (admin)
+// ---------------------------------------------------------------------------
+
+export async function fetchUsuarios() {
+  return fetchJson("/api/usuarios");
+}
+
+export async function criarUsuario(payload) {
+  return fetchJson("/api/usuarios", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function atualizarUsuario(id, payload) {
+  return fetchJson(`/api/usuarios/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function desativarUsuario(id) {
+  return fetchJson(`/api/usuarios/${id}`, { method: "DELETE" });
+}
+
+export async function alterarSenhaUsuario(id, novaSenha) {
+  return fetchJson(`/api/usuarios/${id}/senha`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ nova_senha: novaSenha }),
+  });
 }

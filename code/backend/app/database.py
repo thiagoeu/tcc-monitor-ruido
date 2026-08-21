@@ -102,7 +102,7 @@ def seed_default_admin():
     cursor.execute(
         """
         INSERT INTO usuarios (nome, email, senha_hash, papel, ativo, created_at)
-        VALUES (?, ?, ?, 'admin', 1, ?)
+        VALUES (?, ?, ?, 'admin_master', 1, ?)
         """,
         (nome, email, generate_password_hash(senha), utc_now_iso()),
     )

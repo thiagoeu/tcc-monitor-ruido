@@ -13,6 +13,10 @@ from .auth_service import (
     autenticar_por_token,
     create_usuario,
     list_usuarios,
+    get_usuario,
+    update_usuario,
+    delete_usuario,
+    change_senha,
     login,
     logout,
 )

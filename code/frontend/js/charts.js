@@ -89,10 +89,15 @@ export function drawTrendChart(medicoes) {
   ctx.fillStyle = "transparent";
   ctx.fillRect(0, 0, width, height);
 
+  const isLightMode = document.documentElement.getAttribute('data-theme') === 'light';
+  const textColor = isLightMode ? '#374151' : '#e5e7eb';
+  const labelColor = isLightMode ? '#6b7280' : '#9ca3af';
+  const gridColor = isLightMode ? '#e5e7eb' : '#1f2937';
+
   // Horizontal grid lines & Y labels
-  ctx.strokeStyle = "#1f2937";
+  ctx.strokeStyle = gridColor;
   ctx.lineWidth = 1;
-  ctx.fillStyle = "#9ca3af";
+  ctx.fillStyle = labelColor;
   ctx.font = "10px sans-serif";
   ctx.textAlign = "right";
   ctx.textBaseline = "middle";
@@ -170,7 +175,7 @@ export function drawTrendChart(medicoes) {
     ctx.arc(legendX + 5, legendY + 6, 4, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.fillStyle = "#e5e7eb";
+    ctx.fillStyle = textColor;
     ctx.fillText(label, legendX + 14, legendY);
 
     legendX += textWidth + 24;
@@ -201,10 +206,15 @@ export function drawAlertRateChart(report) {
 
   ctx.clearRect(0, 0, width, height);
 
+  const isLightMode = document.documentElement.getAttribute('data-theme') === 'light';
+  const labelColor = isLightMode ? '#6b7280' : '#9ca3af';
+  const gridColor = isLightMode ? '#e5e7eb' : '#1f2937';
+  const percentColor = isLightMode ? '#374151' : '#e5e7eb';
+
   // Draw horizontal grid lines
-  ctx.strokeStyle = "#1f2937";
+  ctx.strokeStyle = gridColor;
   ctx.lineWidth = 1;
-  ctx.fillStyle = "#9ca3af";
+  ctx.fillStyle = labelColor;
   ctx.font = "10px Arial";
   ctx.textAlign = "right";
   ctx.textBaseline = "middle";
@@ -259,7 +269,7 @@ export function drawAlertRateChart(report) {
     ctx.fill();
     
     // Draw Percent on top
-    ctx.fillStyle = "#e5e7eb";
+    ctx.fillStyle = percentColor;
     ctx.font = "bold 11px Arial";
     ctx.textAlign = "center";
     ctx.textBaseline = "bottom";
@@ -271,7 +281,7 @@ export function drawAlertRateChart(report) {
     ctx.rotate(-Math.PI / 4);
     ctx.textAlign = "right";
     ctx.textBaseline = "middle";
-    ctx.fillStyle = "#a8b2c0";
+    ctx.fillStyle = labelColor;
     ctx.font = "11px Arial";
     
     let label = ambiente.ambiente_nome || ambiente.sensor_id;

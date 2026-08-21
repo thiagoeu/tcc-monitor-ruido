@@ -9,7 +9,7 @@ def test_login_admin_ok(client_raw):
     assert "token" in data
     assert "expira_em" in data
     assert data["usuario"]["email"] == "admin@noiseradar.local"
-    assert data["usuario"]["papel"] == "admin"
+    assert data["usuario"]["papel"] == "admin_master"
 
 
 def test_login_sem_campos(client_raw):

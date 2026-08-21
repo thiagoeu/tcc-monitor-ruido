@@ -177,6 +177,8 @@ Legenda: 🔓 aberta · 🔐 exige `Authorization: Bearer <token>` · 👑 exige
 | `ADMIN_NOME`           | `Administrador`          | Nome do admin seed                 |
 | `DB_PATH`              | `backend/ruido.db`       | Caminho do banco (via create_app)  |
 
+> Nota: O admin seed é criado com o papel `admin_master`, que concede acesso total e capacidade de gerenciar todos os outros usuários, incluindo `admin`s comuns.
+
 ---
 
 ## Convenções de código
@@ -205,7 +207,9 @@ def json_error(message, status=400):
 | 409    | Conflito (ex: sensor_id/email duplicado, ambiente ocupado) |
 | 500    | Falha inesperada (ex: scan de sensores)             |
 
-### Autenticação
+### Autenticação e RBAC (Role-Based Access Control)
+
+Existem três papéis no sistema: `admin_master`, `admin` e `visualizador`.
 
 Decoradores em `app/routes/auth.py`:
 
@@ -215,11 +219,13 @@ Decoradores em `app/routes/auth.py`:
 def rota(): ...
 
 @main_bp.route("/api/...", methods=["POST"])
-@admin_required        # apenas papel == 'admin'
+@admin_required        # apenas papéis 'admin' e 'admin_master'
 def rota(): ...
 ```
 
 Injetam o usuário em `g.usuario` (dict: `id`, `nome`, `email`, `papel`, ...).
+
+Para operações destrutivas ou de gerenciamento (como CRUD de usuários), há validações granulares dentro das rotas para garantir que um `admin` não pode gerenciar ou promover usuários de mesmo ou maior nível administrativo (`admin` ou `admin_master`).
 
 ### CORS
 
@@ -243,10 +249,11 @@ python -m pytest -q
 
 Fixtures disponíveis no `tests/conftest.py`:
 
-| Fixture       | Descrição                                                     |
-| ------------- | ------------------------------------------------------------- |
-| `app`         | App Flask com banco temporário                                |
-| `client_raw`  | Test client sem autenticação                                  |
-| `client`      | Test client **autenticado como admin** (token injetado)       |
+| Fixture               | Descrição                                                     |
+| --------------------- | ------------------------------------------------------------- |
+| `app`                 | App Flask com banco temporário                                |
+| `client_raw`          | Test client sem autenticação                                  |
+| `client`              | Test client **autenticado como admin_master**                 |
+| `admin_normal_client` | Test client **autenticado como admin (comum)**                |
 | `auth_token`  | Token do admin                                                |
 | `ambiente`    | Ambiente criado via API (autenticado)                         |

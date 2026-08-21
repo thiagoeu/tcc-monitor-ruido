@@ -3,16 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>NoiseRadar — Dashboard</title>
-    <meta name="description" content="Dashboard de monitoramento acústico em tempo real. Visualize o nível de ruído de todos os ambientes cadastrados." />
+    <title>NoiseRadar — Logs</title>
+    <meta name="description" content="Histórico de medições acústicas e alertas. Exporte relatórios estruturados em CSV, JSON ou TXT." />
     <link rel="icon" type="image/svg+xml" href="/asserts/logo.svg" />
     <link rel="stylesheet" href="/css/style.css" />
     <script>
-      // Bloqueia acesso sem autenticação antes de qualquer render
       if (!localStorage.getItem("noiseradar_token")) {
         window.location.replace("/login.html");
       }
-      // Aplica tema imediatamente para evitar flash
       (function () {
         const t = localStorage.getItem("nr_theme") ||
           (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
@@ -34,7 +32,7 @@
         <nav class="sidebar-nav">
           <ul>
             <li>
-              <a href="/" class="sidebar-link active" id="nav-dashboard">
+              <a href="/" class="sidebar-link">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
                   <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
@@ -43,7 +41,7 @@
               </a>
             </li>
             <li>
-              <a href="/graficos.html" class="sidebar-link" id="nav-graficos">
+              <a href="/graficos.html" class="sidebar-link">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
                 </svg>
@@ -51,7 +49,7 @@
               </a>
             </li>
             <li>
-              <a href="/logs.html" class="sidebar-link" id="nav-logs">
+              <a href="/logs.html" class="sidebar-link active">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                   <polyline points="14 2 14 8 20 8"/>
@@ -63,7 +61,7 @@
               </a>
             </li>
             <li>
-              <a href="/relatorios.html" class="sidebar-link" id="nav-relatorios">
+              <a href="/relatorios.html" class="sidebar-link">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                   <polyline points="7 10 12 15 17 10"/>
@@ -73,7 +71,7 @@
               </a>
             </li>
             <li>
-              <a href="/configuracoes.html" class="sidebar-link" id="nav-config">
+              <a href="/configuracoes.html" class="sidebar-link">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <circle cx="12" cy="12" r="3"/>
                   <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/>
@@ -123,7 +121,6 @@
             <span class="topbar-title">NoiseRadar Monitoring</span>
           </div>
           <div class="topbar-actions">
-            <!-- Dark mode toggle -->
             <label class="theme-toggle" for="themeToggle" aria-label="Alternar tema">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
@@ -133,40 +130,95 @@
               </div>
               <span class="theme-label">Dark</span>
             </label>
-            <!-- Online badge -->
-            <div class="badge-online" id="badge-online">
+            <div class="badge-online">
               <span class="status-dot"></span>
               Online
             </div>
           </div>
         </header>
 
-        <!-- Conteúdo da página -->
         <main class="page">
           <div class="page-header">
-            <h1>Dashboard</h1>
-            <p id="status">Carregando dados...</p>
+            <h1>Logs</h1>
+            <p>Histórico completo de medições, alertas e exportação de relatórios.</p>
           </div>
 
-          <!-- Cards de ambientes em tempo real -->
-          <div id="ambientes" class="grid"></div>
 
-          <!-- Mini-gráficos de resumo -->
-          <div class="chart-grid">
-            <div class="chart-card">
-              <h3>Tendência — últimas medições</h3>
-              <canvas id="trendChart" height="170"></canvas>
+          <!-- ===== SEÇÃO: Medições Recentes ===== -->
+          <section class="section" aria-labelledby="sec-medicoes-title">
+            <div class="section-header">
+              <div class="section-title" id="sec-medicoes-title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="12 6 12 12 16 14"/>
+                </svg>
+                Medições Recentes
+              </div>
+              <span id="medicoes-count" class="tag tag-muted">0 registros</span>
             </div>
-            <div class="chart-card">
-              <h3>% de alertas por ambiente</h3>
-              <canvas id="alertRateChart" height="170"></canvas>
+            <div class="section-body" style="padding-top:0;">
+              <!-- Filtros -->
+              <div class="filter-bar" style="padding-top:14px;">
+                <select id="filtroStatus" aria-label="Filtrar por status">
+                  <option value="">Todos os status</option>
+                  <option value="alerta">Alertas</option>
+                  <option value="normal">Normal</option>
+                </select>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Data / Hora</th>
+                      <th>Ambiente</th>
+                      <th>Sensor</th>
+                      <th>dB(A)</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="medicoesBody">
+                    <tr><td colspan="5" class="empty-state">Carregando medições...</td></tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
+          </section>
+
+          <!-- ===== SEÇÃO: Alertas ===== -->
+          <section class="section" aria-labelledby="sec-alertas-title">
+            <div class="section-header">
+              <div class="section-title" id="sec-alertas-title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                  <line x1="12" y1="9" x2="12" y2="13"/>
+                  <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                Alertas Recentes
+              </div>
+              <span id="alertas-count" class="tag tag-warn">0 alertas</span>
+            </div>
+            <div class="section-body" style="padding-top:0;">
+              <div class="table-wrap" style="padding-top:14px;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Data / Hora</th>
+                      <th>Ambiente</th>
+                      <th>Mensagem</th>
+                    </tr>
+                  </thead>
+                  <tbody id="alertasBody">
+                    <tr><td colspan="3" class="empty-state">Carregando alertas...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
         </main>
 
         <footer class="page-footer">
           <span>© 2026 NoiseRadar Acoustic Systems.</span>
-          <span>Atualização automática a cada 5 segundos.</span>
+          <span id="last-update">Atualização automática a cada 10 segundos.</span>
         </footer>
       </div>
     </div>
@@ -174,7 +226,7 @@
     <!-- Overlay da sidebar (mobile) -->
     <div id="sidebar-overlay" aria-hidden="true"></div>
 
-    <script type="module" src="/js/dashboard.js"></script>
+    <script type="module" src="/js/logs.js"></script>
     <script src="/js/sidebar.js"></script>
   </body>
 </html>

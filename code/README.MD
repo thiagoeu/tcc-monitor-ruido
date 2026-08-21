@@ -25,12 +25,35 @@ O sistema permite:
 code
 ┣ backend
 ┃ ┣ app
+┃ ┃ ┣ routes/
+┃ ┃ ┣ services/
 ┃ ┃ ┣ database.py
-┃ ┃ ┣ routes.py
-┃ ┃ ┣ services.py
 ┃ ┃ ┗ __init__.py
 ┃ ┗ main.py
 ┣ frontend
+┃ ┣ css/
+┃ ┃ ┗ style.css          # Design System único
+┃ ┣ js/
+┃ ┃ ┣ api.js
+┃ ┃ ┣ auth.js
+┃ ┃ ┣ charts.js
+┃ ┃ ┣ dashboard.js        # Lógica do Dashboard
+┃ ┃ ┣ graficos.js         # Lógica dos Gráficos
+┃ ┃ ┣ logs.js             # Lógica dos Logs
+┃ ┃ ┣ configuracoes.js    # Lógica das Configurações
+┃ ┃ ┣ login.js
+┃ ┃ ┣ toast.js
+┃ ┃ ┗ utils.js
+┃ ┣ index.html            # Dashboard (tempo real)
+┃ ┣ graficos.html         # Gráficos por ambiente
+┃ ┣ logs.html             # Medições, alertas e exportação
+┃ ┣ configuracoes.html    # Cadastro, scan RS485, preferências
+┃ ┗ login.html
+┣ dev
+┃ ┣ FRONTEND.md           # Documentação técnica do frontend
+┃ ┣ BACKEND.md
+┃ ┣ AUTH.md
+┃ ┗ ...
 ┣ mock
 ┗ deploy
 ```
@@ -133,19 +156,32 @@ Saída esperada:
 
 # Acessando o Sistema
 
-## Dashboard Principal
+## Credenciais padrão
 
-Abrir no navegador:
+Ao iniciar pela primeira vez, o banco de dados cria um usuário admin:
 
-```text
-http://127.0.0.1:5000
-```
+| Campo | Valor |
+|---|---|
+| E-mail | `admin@noiseradar.local` |
+| Senha | `admin123` |
 
-## Página de Gráficos
+> Para alterar, defina as variáveis de ambiente `ADMIN_EMAIL`, `ADMIN_SENHA` e `ADMIN_NOME` antes da primeira execução.
 
-```text
-http://127.0.0.1:5000/graficos.html
-```
+## Páginas do Frontend
+
+| Página | URL | Descrição |
+|---|---|---|
+| Login | `http://127.0.0.1:5000/login.html` | Autenticação |
+| Dashboard | `http://127.0.0.1:5000/` | Ambientes em tempo real |
+| Gráficos | `http://127.0.0.1:5000/graficos.html` | Gráficos detalhados por ambiente |
+| Logs | `http://127.0.0.1:5000/logs.html` | Medições, alertas e exportação |
+| Configurações | `http://127.0.0.1:5000/configuracoes.html` | Cadastro, scan RS485, preferências |
+
+## Dark Mode
+
+A interface suporta **dark mode** e **light mode**. O tema é salvo automaticamente no navegador (`localStorage`) e persiste entre sessões. O toggle está disponível na barra superior de todas as páginas.
+
+O tema também pode ser configurado na página de **Configurações → Preferências do Usuário**.
 
 ---
 

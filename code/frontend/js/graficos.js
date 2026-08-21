@@ -1,5 +1,5 @@
 import { fetchAmbientes, fetchMonitoramento } from "./api.js";
-import { formatDb } from "./utils.js";
+import { formatDb, initDarkMode } from "./utils.js";
 import { drawDetailedChart } from "./charts.js";
 import { logout, requireAuth } from "./auth.js";
 
@@ -112,6 +112,7 @@ function updateGraficoStats(statsId, medicoes) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  initDarkMode();
   document
     .getElementById("logoutBtn")
     ?.addEventListener("click", () => logout());

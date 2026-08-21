@@ -40,11 +40,10 @@ export async function excluirAmbiente(id) {
   return fetchJson(`/api/ambientes/${id}`, { method: "DELETE" });
 }
 
-export async function downloadRelatorioTxt(hours) {
+// Relatórios
+async function downloadFile(url, defaultFilename) {
   try {
-    const response = await fetch(`/api/relatorios/txt?hours=${hours}`, {
-      headers: authHeaders(),
-    });
+    const response = await fetch(url, { headers: authHeaders() });
     if (response.status === 401) {
       window.location.href = "/login.html";
       const error = new Error("Sessão expirada. Faça login novamente.");
@@ -58,19 +57,42 @@ export async function downloadRelatorioTxt(hours) {
       throw error;
     }
 
+    // Attempt to extract filename from Content-Disposition header
+    let filename = defaultFilename;
+    const disposition = response.headers.get("Content-Disposition");
+    if (disposition && disposition.indexOf("attachment") !== -1) {
+      const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+      const matches = filenameRegex.exec(disposition);
+      if (matches != null && matches[1]) { 
+        filename = matches[1].replace(/['"]/g, '');
+      }
+    }
+
     const blob = await response.blob();
-    const url = URL.createObjectURL(blob);
+    const objectUrl = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.href = url;
-    link.download = "relatorio_ruido.txt";
+    link.href = objectUrl;
+    link.download = filename;
     document.body.appendChild(link);
     link.click();
     link.remove();
-    URL.revokeObjectURL(url);
+    URL.revokeObjectURL(objectUrl);
   } catch (error) {
     if (error.name === "TypeError") {
       showToast("Falha de rede ao contactar o servidor.");
     }
     throw error;
   }
+}
+
+export async function downloadRelatorioTxt(hours) {
+  return downloadFile(`/api/relatorios/txt?hours=${hours}`, "relatorio_ruido.txt");
+}
+
+export async function downloadRelatorioPdf(hours) {
+  return downloadFile(`/api/relatorios/pdf?hours=${hours}`, "relatorio_ruido.pdf");
+}
+
+export async function downloadRelatorioCsv(hours) {
+  return downloadFile(`/api/relatorios/csv?hours=${hours}`, "relatorio_ruido.csv");
 }

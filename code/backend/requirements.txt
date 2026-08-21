@@ -1,4 +1,6 @@
 flask
-requests
-minimalmodbus
+flask-cors
+waitress
 pyserial
+fpdf2
+matplotlib

@@ -29,6 +29,8 @@ def test_resumo_com_medicoes(client, ambiente):
     assert data["geral"]["media_db"] == 70.0
     assert data["geral"]["pico_db"] == 90.0
     assert data["geral"]["minimo_db"] == 50.0
+    assert data["geral"]["mediana_db"] == 70.0
+    assert "leq_db" in data["geral"]
 
     assert len(data["ambientes"]) == 1
     ambiente_resumo = data["ambientes"][0]
@@ -69,3 +71,32 @@ def test_relatorio_txt(client, ambiente):
     assert "Total de medições: 1" in content
     assert "Total de alertas: 1" in content
     assert "Content-Disposition" in response.headers
+
+def test_relatorio_csv(client, ambiente):
+    client.post("/api/medicoes", json={
+        "sensor_id": ambiente["sensor_id"],
+        "db": 70,
+    })
+
+    response = client.get("/api/relatorios/csv")
+    assert response.status_code == 200
+    assert response.content_type.startswith("text/csv")
+    assert "Content-Disposition" in response.headers
+
+    content = response.get_data(as_text=True)
+    assert "Ambiente,Sensor ID,Localizacao" in content
+    assert "Laboratorio" in content
+
+def test_relatorio_pdf(client, ambiente):
+    client.post("/api/medicoes", json={
+        "sensor_id": ambiente["sensor_id"],
+        "db": 70,
+    })
+
+    response = client.get("/api/relatorios/pdf")
+    assert response.status_code == 200
+    assert response.content_type == "application/pdf"
+    assert "Content-Disposition" in response.headers
+    
+    # PDF starts with %PDF-
+    assert response.data.startswith(b"%PDF-")

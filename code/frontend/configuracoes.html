@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NoiseRadar — Configurações</title>
+    <meta name="description" content="Configurações do sistema NoiseRadar: cadastro de ambientes, scan de sensores físicos RS485 e preferências do usuário." />
+    <link rel="icon" type="image/svg+xml" href="/asserts/logo.svg" />
+    <link rel="stylesheet" href="/css/style.css" />
+    <script>
+      if (!localStorage.getItem("noiseradar_token")) {
+        window.location.replace("/login.html");
+      }
+      (function () {
+        const t = localStorage.getItem("nr_theme") ||
+          (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", t);
+      })();
+    </script>
+  </head>
+  <body>
+    <div class="app-layout">
+
+      <!-- ===== SIDEBAR ===== -->
+      <nav class="sidebar" aria-label="Navegação principal">
+        <div class="sidebar-header">
+          <a href="/" class="brand" aria-label="NoiseRadar — Página inicial">
+            <img src="/asserts/logo.svg" alt="NoiseRadar" class="brand-logo" />
+          </a>
+        </div>
+
+        <nav class="sidebar-nav">
+          <ul>
+            <li>
+              <a href="/" class="sidebar-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                  <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+                </svg>
+                Dashboard
+              </a>
+            </li>
+            <li>
+              <a href="/graficos.html" class="sidebar-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                </svg>
+                Gráficos
+              </a>
+            </li>
+            <li>
+              <a href="/logs.html" class="sidebar-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                  <line x1="10" y1="9" x2="8" y2="9"/>
+                </svg>
+                Logs
+              </a>
+            </li>
+            <li>
+              <a href="/relatorios.html" class="sidebar-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/>
+                  <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                Relatórios
+              </a>
+            </li>
+            <li>
+              <a href="/configuracoes.html" class="sidebar-link active">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="3"/>
+                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/>
+                </svg>
+                Configurações
+              </a>
+            </li>
+          </ul>
+        </nav>
+
+        <div class="sidebar-footer">
+          <div class="system-status">
+            <span class="status-dot" id="status-dot"></span>
+            <span id="status-sidebar">Online</span>
+          </div>
+          <button type="button" id="logoutBtn" class="logout-btn">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+            Sair
+          </button>
+        </div>
+      </nav>
+
+      <!-- ===== MAIN ===== -->
+      <div class="main-content">
+
+        <!-- Topbar -->
+        <header class="topbar">
+          <div class="topbar-left">
+            <button
+              id="menu-toggle"
+              class="menu-toggle"
+              aria-label="Abrir menu de navegação"
+              aria-expanded="false"
+              aria-controls="sidebar"
+              type="button"
+            >
+              <span class="bars" aria-hidden="true">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+              </span>
+            </button>
+            <span class="topbar-title">NoiseRadar Monitoring</span>
+          </div>
+          <div class="topbar-actions">
+            <label class="theme-toggle" for="themeToggle" aria-label="Alternar tema">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+              </svg>
+              <div class="toggle-track" id="themeToggle">
+                <div class="toggle-thumb"></div>
+              </div>
+              <span class="theme-label">Dark</span>
+            </label>
+            <div class="badge-online">
+              <span class="status-dot"></span>
+              Online
+            </div>
+          </div>
+        </header>
+
+        <main class="page">
+          <div class="page-header">
+            <h1>Configurações</h1>
+            <p>Gerencie ambientes, sensores físicos e preferências do sistema.</p>
+          </div>
+
+          <!-- Layout 2 colunas (responsivo via .config-grid) -->
+          <div class="config-grid">
+
+            <!-- COLUNA ESQUERDA -->
+            <div>
+
+              <!-- ===== CADASTRO DE AMBIENTE ===== -->
+              <section class="section" aria-labelledby="sec-ambiente-title" style="margin-bottom:16px;">
+                <div class="section-header">
+                  <div class="section-title" id="sec-ambiente-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                      <polyline points="9 22 9 12 15 12 15 22"/>
+                    </svg>
+                    Cadastro de Ambiente
+                  </div>
+                </div>
+                <div class="section-body">
+                  <p class="helper-text">
+                    Dica: o Sensor ID é um identificador textual (ex: <code>sala-a-01</code>) que corresponde ao campo <code>sensor_id</code> enviado pelo app mobile.
+                  </p>
+                  <form id="ambienteForm">
+                    <div class="input-grid" style="margin-bottom:12px;">
+                      <div class="form-group">
+                        <label class="form-label" for="campo-nome">Nome</label>
+                        <input id="campo-nome" name="nome" placeholder="Ex: Sala de Reunião A" required />
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label" for="campo-localizacao">Localização</label>
+                        <input id="campo-localizacao" name="localizacao" placeholder="Ex: 2º andar, bloco B" required />
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label" for="campo-sensor-id">Sensor ID</label>
+                        <input id="campo-sensor-id" name="sensor_id" placeholder="Ex: sala-a-01" required />
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label" for="campo-limite-db">Limite dB</label>
+                        <input id="campo-limite-db" name="limite_db" type="number" step="0.1" min="0" value="65" required />
+                      </div>
+                    </div>
+                    <div style="display:flex;gap:10px;align-items:center;">
+                      <button type="submit" class="btn-primary" id="submitAmbienteBtn">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                        Salvar ambiente
+                      </button>
+                      <span id="formMessage" class="small form-message"></span>
+                    </div>
+                  </form>
+                </div>
+              </section>
+
+              <!-- ===== SCAN DE SENSORES FÍSICOS ===== -->
+              <section class="section" aria-labelledby="sec-scan-title">
+                <div class="section-header">
+                  <div class="section-title" id="sec-scan-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+                      <line x1="8" y1="18" x2="21" y2="18"/>
+                      <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/>
+                      <line x1="3" y1="18" x2="3.01" y2="18"/>
+                    </svg>
+                    Scan de Sensores Físicos (RS485 / Modbus)
+                  </div>
+                </div>
+                <div class="section-body">
+                  <p class="helper-text">
+                    Escaneia a porta serial do Raspberry Pi para detectar IDs Modbus respondendo no barramento RS485.
+                  </p>
+                  <div class="input-grid" style="margin-bottom:12px;">
+                    <div class="form-group">
+                      <label class="form-label" for="scanPort">Porta serial</label>
+                      <input id="scanPort" value="/dev/ttyUSB0" placeholder="Ex: /dev/ttyUSB0" />
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label" for="scanBaudrate">Baudrate</label>
+                      <select id="scanBaudrate">
+                        <option value="9600" selected>9600</option>
+                        <option value="19200">19200</option>
+                        <option value="38400">38400</option>
+                        <option value="57600">57600</option>
+                        <option value="115200">115200</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label" for="scanStartId">ID inicial</label>
+                      <input id="scanStartId" type="number" min="1" max="247" value="1" />
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label" for="scanEndId">ID final</label>
+                      <input id="scanEndId" type="number" min="1" max="247" value="10" />
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label" for="scanRegisters">Registradores</label>
+                      <input id="scanRegisters" value="0,1" placeholder="Ex: 0,1" />
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label" for="scanFunctionCode">Function Code</label>
+                      <select id="scanFunctionCode">
+                        <option value="3">Function 3 (Holding)</option>
+                        <option value="4">Function 4 (Input)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <button id="scanSensoresBtn" type="button" class="btn-primary" style="margin-bottom:14px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                    Escanear sensores
+                  </button>
+
+                  <div id="sensoresResumo" class="helper-text">
+                    Clique em "Escanear sensores" para buscar na porta serial.
+                  </div>
+                  <div id="portasResumo" class="helper-text" style="margin-top:-6px;"></div>
+
+                  <div class="table-wrap">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>ID Modbus</th>
+                          <th>Registrador</th>
+                          <th>Valor bruto</th>
+                          <th>Ação</th>
+                        </tr>
+                      </thead>
+                      <tbody id="sensoresBody">
+                        <tr><td colspan="4" class="empty-state">Aguardando varredura.</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </section>
+
+            </div><!-- fim col esquerda -->
+
+            <!-- COLUNA DIREITA — Preferências -->
+            <div>
+              <section class="section" aria-labelledby="sec-prefs-title">
+                <div class="section-header">
+                  <div class="section-title" id="sec-prefs-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/>
+                      <line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/>
+                      <line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/>
+                      <line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/>
+                      <line x1="17" y1="16" x2="23" y2="16"/>
+                    </svg>
+                    Preferências do Usuário
+                  </div>
+                </div>
+                <div class="section-body">
+                  <div class="pref-list">
+
+                    <div class="pref-item">
+                      <div class="pref-info">
+                        <div class="pref-label">Dark Mode</div>
+                        <div class="pref-desc">Ativa o tema escuro da interface.</div>
+                      </div>
+                      <label class="switch" aria-label="Dark Mode">
+                        <input type="checkbox" id="pref-dark-mode" />
+                        <span class="switch-slider"></span>
+                      </label>
+                    </div>
+
+                    <div class="pref-item">
+                      <div class="pref-info">
+                        <div class="pref-label">Auto-scroll nos Logs</div>
+                        <div class="pref-desc">Mantém os novos registros sempre visíveis.</div>
+                      </div>
+                      <label class="switch" aria-label="Auto-scroll">
+                        <input type="checkbox" id="pref-autoscroll" checked />
+                        <span class="switch-slider"></span>
+                      </label>
+                    </div>
+
+                    <div class="pref-item">
+                      <div class="pref-info">
+                        <div class="pref-label">Alertas de Áudio</div>
+                        <div class="pref-desc">Toca um som em alertas críticos.</div>
+                      </div>
+                      <label class="switch" aria-label="Alertas de áudio">
+                        <input type="checkbox" id="pref-audio" />
+                        <span class="switch-slider"></span>
+                      </label>
+                    </div>
+
+                  </div>
+
+                  <div style="margin-top:18px;display:flex;flex-direction:column;gap:10px;">
+                    <button id="savePrefsBtn" type="button" class="btn-primary">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                        <polyline points="17 21 17 13 7 13 7 21"/>
+                        <polyline points="7 3 7 8 15 8"/>
+                      </svg>
+                      Salvar preferências
+                    </button>
+                    <button id="resetPrefsBtn" type="button" class="btn-secondary">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="23 4 23 10 17 10"/>
+                        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                      </svg>
+                      Restaurar padrões
+                    </button>
+                  </div>
+
+                  <p id="prefsMessage" class="small form-message" style="margin-top:10px;"></p>
+                </div>
+              </section>
+            </div><!-- fim col direita -->
+
+          </div><!-- fim grid 2 cols -->
+        </main>
+
+        <footer class="page-footer">
+          <span>© 2026 NoiseRadar Acoustic Systems.</span>
+          <span>Todas as alterações são salvas localmente.</span>
+        </footer>
+      </div>
+    </div>
+
+    <!-- Overlay da sidebar (mobile) -->
+    <div id="sidebar-overlay" aria-hidden="true"></div>
+
+    <script type="module" src="/js/configuracoes.js"></script>
+    <script src="/js/sidebar.js"></script>
+  </body>
+</html>

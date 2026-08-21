@@ -3,6 +3,8 @@ from flask import Response, jsonify, request
 from app.database import utc_now_iso
 from app.services import (
     build_text_report,
+    build_csv_report,
+    build_pdf_report,
     get_report_summary,
 )
 
@@ -30,7 +32,10 @@ def http_relatorio_resumo():
         24 * 30,
     )
 
-    return jsonify(get_report_summary(hours))
+    summary = get_report_summary(hours)
+    # Strip raw data to prevent large payloads
+    summary.pop("_raw_medicoes", None)
+    return jsonify(summary)
 
 
 @main_bp.route("/api/relatorios/txt", methods=["GET"])
@@ -44,11 +49,8 @@ def http_relatorio_txt():
     )
 
     summary = get_report_summary(hours)
-
     content = build_text_report(summary)
-
     timestamp = utc_now_iso().replace(":", "-").split("+")[0]
-
     filename = f"relatorio_ruido_{timestamp}.txt"
 
     return Response(
@@ -60,8 +62,58 @@ def http_relatorio_txt():
         },
     )
 
+@main_bp.route("/api/relatorios/csv", methods=["GET"])
+@login_required
+def http_relatorio_csv():
+    hours = parse_int(
+        request.args.get("hours", 24),
+        24,
+        1,
+        24 * 30,
+    )
+
+    summary = get_report_summary(hours)
+    content = build_csv_report(summary)
+    timestamp = utc_now_iso().replace(":", "-").split("+")[0]
+    filename = f"relatorio_ruido_{timestamp}.csv"
+
+    return Response(
+        content,
+        mimetype="text/csv; charset=utf-8",
+        headers={
+            "Content-Disposition":
+                f'attachment; filename="{filename}"'
+        },
+    )
+
+@main_bp.route("/api/relatorios/pdf", methods=["GET"])
+@login_required
+def http_relatorio_pdf():
+    hours = parse_int(
+        request.args.get("hours", 24),
+        24,
+        1,
+        24 * 30,
+    )
+
+    summary = get_report_summary(hours)
+    content = build_pdf_report(summary)
+    timestamp = utc_now_iso().replace(":", "-").split("+")[0]
+    filename = f"relatorio_ruido_{timestamp}.pdf"
+
+    return Response(
+        content,
+        mimetype="application/pdf",
+        headers={
+            "Content-Disposition":
+                f'attachment; filename="{filename}"'
+        },
+    )
+
 
 @main_bp.route("/api/relatorios/resumo", methods=["OPTIONS"])
 @main_bp.route("/api/relatorios/txt", methods=["OPTIONS"])
+@main_bp.route("/api/relatorios/csv", methods=["OPTIONS"])
+@main_bp.route("/api/relatorios/pdf", methods=["OPTIONS"])
 def relatorios_options():
     return ("", 204)

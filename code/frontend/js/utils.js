@@ -2,6 +2,8 @@
 import { authHeaders, clearToken } from "./auth.js";
 import { showToast } from "./toast.js";
 
+// ============ FORMATAÇÃO ============
+
 export function toLocalDate(isoDate) {
   if (!isoDate) return "-";
   return new Date(isoDate).toLocaleString("pt-BR");
@@ -17,6 +19,62 @@ export function statusTag(excedeu) {
     ? '<span class="tag warn">Acima do limite</span>'
     : '<span class="tag ok">Normal</span>';
 }
+
+// ============ DARK MODE ============
+
+const THEME_KEY = "nr_theme";
+
+/**
+ * Inicializa o dark mode em qualquer página.
+ * Lê a preferência do localStorage, aplica data-theme no <html>
+ * e registra o listener do botão toggle (id="themeToggle").
+ */
+export function initDarkMode() {
+  const saved = localStorage.getItem(THEME_KEY);
+  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const theme = saved ?? (prefersDark ? "dark" : "light");
+
+  applyTheme(theme);
+
+  const toggle = document.getElementById("themeToggle");
+  if (toggle) {
+    toggle.addEventListener("click", () => {
+      const current = document.documentElement.getAttribute("data-theme") ?? "dark";
+      const next = current === "dark" ? "light" : "dark";
+      applyTheme(next);
+      localStorage.setItem(THEME_KEY, next);
+    });
+  }
+}
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute("data-theme", theme);
+  updateToggleUI(theme);
+}
+
+function updateToggleUI(theme) {
+  const track = document.querySelector(".toggle-track");
+  const label = document.querySelector(".theme-label");
+  if (track) track.classList.toggle("on", theme === "light");
+  if (label) label.textContent = theme === "dark" ? "Dark" : "Light";
+}
+
+/**
+ * Retorna o tema atual salvo.
+ */
+export function getTheme() {
+  return localStorage.getItem(THEME_KEY) ?? "dark";
+}
+
+/**
+ * Define o tema diretamente (para uso pela página de Configurações).
+ */
+export function setTheme(theme) {
+  localStorage.setItem(THEME_KEY, theme);
+  applyTheme(theme);
+}
+
+// ============ FETCH ============
 
 export async function fetchJson(path, options = {}) {
   const controller = new AbortController();

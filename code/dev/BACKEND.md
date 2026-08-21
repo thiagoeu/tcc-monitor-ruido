@@ -148,8 +148,10 @@ Legenda: 🔓 aberta · 🔐 exige `Authorization: Bearer <token>` · 👑 exige
 
 | Método | Rota                          | Proteção | Descrição                 |
 | ------ | ----------------------------- | -------- | ------------------------- |
-| GET    | `/api/relatorios/resumo`      | 🔐       | Resumo por janela (`?hours=`, default 24) |
-| GET    | `/api/relatorios/txt`         | 🔐       | Download em texto plano   |
+| GET    | `/api/relatorios/resumo`      | 🔐       | Resumo estatístico por janela (`?hours=`, default 24) |
+| GET    | `/api/relatorios/txt`         | 🔐       | Download de relatório em texto plano |
+| GET    | `/api/relatorios/csv`         | 🔐       | Download de relatório em CSV tabular |
+| GET    | `/api/relatorios/pdf`         | 🔐       | Download de relatório em PDF com gráficos |
 
 ### Sessões de Medição (em memória, TTL 60s)
 
